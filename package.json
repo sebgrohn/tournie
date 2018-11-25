@@ -1,0 +1,30 @@
+{
+  "name": "challonge-bot",
+  "version": "0.0.1",
+  "description": "Challonge bot for Slack",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sebgrohn/challonge-bot.git"
+  },
+  "author": "Sebastian Gröhn, Ben Bryant",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sebgrohn/challonge-bot/issues"
+  },
+  "homepage": "https://github.com/sebgrohn/challonge-bot",
+  "dependencies": {
+    "claudia-bot-builder": "^4.5.0"
+  },
+  "devDependencies": {
+    "claudia": "^5.2.0",
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^22.0.1",
+    "jest": "^23.6.0"
+  }
+}
