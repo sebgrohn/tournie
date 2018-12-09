@@ -46,29 +46,31 @@ function botFactory(challongeService, userRepository) {
     async function listTournaments(message) {
         const openTournaments = await fetchOpenTournaments();
 
-        return R.reduce(
-            (response, t) => {
-                response
-                    .addAttachment(`tournament-${t.subdomain}-${t.id}`)
-                    .addTitle(t.name, t.full_challonge_url)
-                    .addText(formatDescription(t.description))
-                    .addColor('#252830')
-                    .addField('Tournament', `${formatGameName(t.game_name)} – ${t.tournament_type}`, true)
-                    .addField('# Players', `${t.participants_count} / ${t.signup_cap}`, true);
-
-                if (t.started_at) {
-                    response.addField('Started', formatTimestamp(t.started_at), true);
-                } else {
+        return openTournaments.length === 0
+            ? 'There are no open tournaments. Is it time to start one? :thinking_face:'
+            : R.reduce(
+                (response, t) => {
                     response
-                        .addField('Created', formatTimestamp(t.created_at), true)
-                        .addLinkButton('Sign Up', t.sign_up_url);
-                }
+                        .addAttachment(`tournament-${t.subdomain}-${t.id}`)
+                        .addTitle(t.name, t.full_challonge_url)
+                        .addText(formatDescription(t.description))
+                        .addColor('#252830')
+                        .addField('Tournament', `${formatGameName(t.game_name)} – ${t.tournament_type}`, true)
+                        .addField('# Players', `${t.participants_count} / ${t.signup_cap}`, true);
 
-                return response.addField('State', `${t.state} (${t.progress_meter}%)`, true);
-            },
-            new SlackTemplate('*:trophy: Open tournaments: :trophy:*'),
-        )(openTournaments)
-            .get();
+                    if (t.started_at) {
+                        response.addField('Started', formatTimestamp(t.started_at), true);
+                    } else {
+                        response
+                            .addField('Created', formatTimestamp(t.created_at), true)
+                            .addLinkButton('Sign Up', t.sign_up_url);
+                    }
+
+                    return response.addField('State', `${t.state} (${t.progress_meter}%)`, true);
+                },
+                new SlackTemplate('*:trophy: Open tournaments: :trophy:*'),
+            )(openTournaments)
+                .get();
     }
 
     async function getCurrentUser({ sender }) {
@@ -113,20 +115,22 @@ function botFactory(challongeService, userRepository) {
         }
 
         const openMatches = await fetchOpenMatchesForMember(user.challongeEmailHash);
-        
+
         // TODO get users corresponding to opponents to show matching Slack nicks
 
-        return R.reduce(
-            (response, m) => response
-                .addAttachment(`match-${m.id}`)
-                .addTitle(m.tournament.name, m.tournament.full_challonge_url)
-                .addText(formatMatch(m, user.challongeEmailHash))
-                .addColor('#252830')
-                .addField('Tournament', `${formatGameName(m.tournament.game_name)} – ${m.tournament.tournament_type} (${m.tournament.progress_meter}%)`, true)
-                .addField('Match opened', m.started_at ? formatTimestamp(m.started_at) : 'Pending opponent', true),
-            new SlackTemplate('*:trophy: Your open matches: :trophy:*'),
-        )(openMatches)
-            .get();
+        return openMatches.length === 0
+            ? 'You have no matches to play. :sweat_smile:'
+            : R.reduce(
+                (response, m) => response
+                    .addAttachment(`match-${m.id}`)
+                    .addTitle(m.tournament.name, m.tournament.full_challonge_url)
+                    .addText(formatMatch(m, user.challongeEmailHash))
+                    .addColor('#252830')
+                    .addField('Tournament', `${formatGameName(m.tournament.game_name)} – ${m.tournament.tournament_type} (${m.tournament.progress_meter}%)`, true)
+                    .addField('Match opened', m.started_at ? formatTimestamp(m.started_at) : 'Pending opponent', true),
+                new SlackTemplate('*:trophy: Your open matches: :trophy:*'),
+            )(openMatches)
+                .get();
     }
 
     function showUsage(message) {
