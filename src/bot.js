@@ -1,6 +1,6 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const { formatTimestamp, formatDescription, formatGameName } = require('./formatting');
+const { formatTimestamp, formatDescription, formatGameName, formatMatch } = require('./formatting');
 
 const slashCommand = '/challonge';
 const supportedCommands = [
@@ -8,18 +8,25 @@ const supportedCommands = [
     ['whoami', 'show who you are on Challonge'],
     ['login <challonge_username>', 'connect your Slack and Challonge accounts'],
     ['logout', 'disconnect your Slack and Challonge accounts'],
+    ['matches|games', 'list open matches in tournaments you are part of'],
     ['help|usage', 'show this information'],
 ];
 const defaultCommand = 'tournaments';
 
 function botFactory(challongeService, userRepository) {
-    const { fetchOpenTournaments, fetchMembers } = challongeService;
+    const { 
+        fetchOpenTournaments,
+        fetchMembers,
+        fetchOpenMatchesForMember,
+    } = challongeService;
 
     const commandHandlers = {
         tournaments: listTournaments,
         whoami: getCurrentUser,
         login: logInUser,
         logout: logOutUser,
+        matches: listOpenMatches,
+        games: listOpenMatches,
         help: showUsage,
         usage: showUsage,
     };
@@ -97,6 +104,29 @@ function botFactory(challongeService, userRepository) {
         }
         await userRepository.deleteUser(sender);
         return `Okay, you are now forgotten. I hope to see you later! :wave:`;
+    }
+
+    async function listOpenMatches({ sender }) {
+        const user = await userRepository.getUser(sender);
+        if (!user) {
+            return 'I don\'t know who you are. :crying_cat_face:';
+        }
+
+        const openMatches = await fetchOpenMatchesForMember(user.challongeEmailHash);
+        
+        // TODO get users corresponding to opponents to show matching Slack nicks
+
+        return R.reduce(
+            (response, m) => response
+                .addAttachment(`match-${m.id}`)
+                .addTitle(m.tournament.name, m.tournament.full_challonge_url)
+                .addText(formatMatch(m, user.challongeEmailHash))
+                .addColor('#252830')
+                .addField('Tournament', `${formatGameName(m.tournament.game_name)} – ${m.tournament.tournament_type} (${m.tournament.progress_meter}%)`, true)
+                .addField('Match opened', m.started_at ? formatTimestamp(m.started_at) : 'Pending opponent', true),
+            new SlackTemplate('*:trophy: Your open matches: :trophy:*'),
+        )(openMatches)
+            .get();
     }
 
     function showUsage(message) {
