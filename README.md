@@ -2,15 +2,23 @@
 
 Challonge bot for Slack
 
+
 # Installation
 
-https://claudiajs.com/tutorials/installing.html
+1. Copy `challonge.json.example` to `challonge.json` and enter Challonge organization sub-domain and Challonge user API key.
 
+2. Create Slack app.
+
+3. Follow [Claudia set-up instructions](https://claudiajs.com/tutorials/installing.html) and deploy to AWS:
+   ```
+   npx claudia create --region eu-west-1 --api-module index --configure-slack-slash-app --profile claudia
+   ```
+
+# Re-deploy / update
 ```
-npx claudia create --region eu-west-1 --api-module index --configure-slack-slash-app --profile claudia
-npx claudia update --configure-slack-slash-app --profile claudia
 npx claudia update --cache-api-config --profile claudia
 ```
+
 
 # License
 
