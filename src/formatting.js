@@ -9,7 +9,7 @@ const formatDescription = description =>
 function formatGameName(gameName) {
     switch (gameName.toLowerCase()) {
         case 'table tennis':
-            return ':ping-pong:';
+            return ':table_tennis_paddle_and_ball:';
         case 'klask':
             return ':klask:';
         default:
