@@ -16,6 +16,8 @@ Challonge bot for Slack
    npx claudia create --region eu-west-1 --api-module index --configure-slack-slash-app --profile claudia
    ```
 
+5. Add read / write policy for SimpleDB for the AWS IAM role (probably "challonge-bot-executor").
+
 # Re-deploy / update
 
 ```

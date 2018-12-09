@@ -8,7 +8,7 @@ const supportedCommands = [
     ['help|usage', 'show this information'],
 ];
 
-function botFactory(challongeService) {
+function botFactory(challongeService, userRepository) {
     const { fetchOpenTournaments } = challongeService;
 
     return async function handleMessage(message) {
