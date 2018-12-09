@@ -1,9 +1,10 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const { formatTimestamp, formatDescription, formatGameName } = require('./formatting');
-const { organization } = require('../challonge');
 
-function botFactory(challongeApi) {
+function botFactory(challongeService) {
+    const { fetchOpenTournaments } = challongeService;
+
     return async function handleMessage(message) {
         const { type, text } = message;
         const command = text || 'list';
@@ -24,17 +25,7 @@ function botFactory(challongeApi) {
     }
 
     async function listTournaments({ type }) {
-        const { data } = await challongeApi.get('tournaments.json', {
-            params: {
-                subdomain: organization,
-                // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
-            },
-        });
-
-        const openTournaments = R.pipe(
-            R.map(({ tournament }) => tournament),
-            R.filter(t => ['pending', 'underway'].includes(t.state)),
-        )(data);
+        const openTournaments = await fetchOpenTournaments();
 
         if (type === 'slack-slash-command') {
             return R.reduce(
