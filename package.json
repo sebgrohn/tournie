@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/sebgrohn/challonge-bot",
   "dependencies": {
+    "aws-sdk": "^2.373.0",
     "axios": "^0.18.0",
     "claudia-bot-builder": "^4.5.0",
     "ramda": "^0.26.1",
