@@ -1,6 +1,6 @@
 const axios = require('axios');
 const botBuilder = require('claudia-bot-builder');
-const botFactory = require('./bot');
+const botFactory = require('./src/bot');
 const { organization, apiKey } = require('./challonge');
 
 const challongeApi = axios.create({

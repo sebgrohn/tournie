@@ -1,7 +1,7 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const { formatTimestamp, formatDescription, formatGameName } = require('./formatting');
-const { organization } = require('./challonge');
+const { organization } = require('../challonge');
 
 function botFactory(challongeApi) {
     return async function handleMessage(message) {
