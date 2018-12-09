@@ -8,7 +8,7 @@ const supportedCommands = [
     ['whoami', 'show who you are on Challonge'],
     ['login <challonge_username>', 'connect your Slack and Challonge accounts'],
     ['logout', 'disconnect your Slack and Challonge accounts'],
-    ['matches|games', 'list open matches in tournaments you are part of'],
+    ['next', 'list open matches in tournaments you are part of'],
     ['help|usage', 'show this information'],
 ];
 const defaultCommand = 'tournaments';
@@ -21,12 +21,11 @@ function botFactory(challongeService, userRepository) {
     } = challongeService;
 
     const commandHandlers = {
-        tournaments: listTournaments,
-        whoami: getCurrentUser,
+        tournaments: listOpenTournaments,
+        whoami: showCurrentUser,
         login: logInUser,
         logout: logOutUser,
-        matches: listOpenMatches,
-        games: listOpenMatches,
+        next: listNextMatches,
         help: showUsage,
         usage: showUsage,
     };
@@ -43,7 +42,7 @@ function botFactory(challongeService, userRepository) {
         }
     }
 
-    async function listTournaments(message) {
+    async function listOpenTournaments(message) {
         const openTournaments = await fetchOpenTournaments();
 
         return openTournaments.length === 0
@@ -73,7 +72,7 @@ function botFactory(challongeService, userRepository) {
                 .get();
     }
 
-    async function getCurrentUser({ sender }) {
+    async function showCurrentUser({ sender }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
             return 'I don\'t know who you are. :crying_cat_face:';
@@ -108,7 +107,7 @@ function botFactory(challongeService, userRepository) {
         return `Okay, you are now forgotten. I hope to see you later! :wave:`;
     }
 
-    async function listOpenMatches({ sender }) {
+    async function listNextMatches({ sender }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
             return 'I don\'t know who you are. :crying_cat_face:';
