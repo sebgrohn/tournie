@@ -4,43 +4,35 @@ const { formatTimestamp, formatDescription, formatGameName } = require('./format
 
 const slashCommand = '/challonge';
 const supportedCommands = [
-    ['[list]', 'list open tournaments'],
+    ['[tournaments]', 'list open tournaments'],
     ['whoami', 'show who you are on Challonge'],
     ['login <challonge_username>', 'connect your Slack and Challonge accounts'],
     ['logout', 'disconnect your Slack and Challonge accounts'],
     ['help|usage', 'show this information'],
 ];
+const defaultCommand = 'tournaments';
 
 function botFactory(challongeService, userRepository) {
     const { fetchOpenTournaments, fetchMembers } = challongeService;
 
+    const commandHandlers = {
+        tournaments: listTournaments,
+        whoami: getCurrentUser,
+        login: logInUser,
+        logout: logOutUser,
+        help: showUsage,
+        usage: showUsage,
+    };
+
     return async function handleMessage(message) {
         const { text } = message;
-        const command = (text || 'list').split(/\s+/)[0];
+        const command = (text || defaultCommand).split(/\s+/)[0];
 
         try {
-            switch (command) {
-                case 'list':
-                    return await listTournaments(message);
-
-                case 'whoami':
-                    return await getCurrentUser(message);
-
-                case 'login':
-                    return await logInUser(message);
-
-                case 'logout':
-                    return await logOutUser(message);
-
-                case 'help':
-                case 'usage':
-                    return await usage(message);
-
-                default:
-                    return await usage(message, true);
-            }
+            const handleCommand = commandHandlers[command] || handleUnknown;
+            return await handleCommand(message);
         } catch (error) {
-            return handleError(message, error);
+            return await handleError(message, error);
         }
     }
 
@@ -107,17 +99,21 @@ function botFactory(challongeService, userRepository) {
         return `Okay, you are now forgotten. I hope to see you later! :wave:`;
     }
 
-    async function usage(message, invalidCommand) {
+    function showUsage(message) {
         const supportedCommandsString = R.pipe(
             R.map(([c, d]) => `• \`${slashCommand} ${c}\` to ${d}`),
             R.join('\n')
         )(supportedCommands);
 
-        return new SlackTemplate(invalidCommand ? ':trophy: This is not how you win a game...' : undefined)
+        return new SlackTemplate()
             .addAttachment('usage')
             .addText(`Supported commands:\n${supportedCommandsString}`)
             .addColor('#252830')
             .get();
+    }
+
+    function handleUnknown(message) {
+        return `:trophy: This is not how you win a game... Try \`${slashCommand} help\`.`;
     }
 
     function handleError(_, { response, message }) {
