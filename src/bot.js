@@ -2,7 +2,6 @@ const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const { formatTimestamp, formatDescription, formatGameName, formatMatch } = require('./formatting');
 
-const slashCommand = '/challonge';
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
     ['whoami', 'show who you are on Challonge'],
@@ -132,10 +131,11 @@ function botFactory(challongeService, userRepository) {
                 .get();
     }
 
-    function showUsage(message) {
+    function showUsage({ originalRequest }) {
+        const { command } = originalRequest;
         const supportedCommandsString = R.pipe(
-            R.map(([c, d]) => `• \`${slashCommand} ${c}\` to ${d}`),
-            R.join('\n')
+            R.map(([c, d]) => `• \`${command} ${c}\` to ${d}`),
+            R.join('\n'),
         )(supportedCommands);
 
         return new SlackTemplate()
@@ -145,8 +145,9 @@ function botFactory(challongeService, userRepository) {
             .get();
     }
 
-    function handleUnknown(message) {
-        return `:trophy: This is not how you win a game... Try \`${slashCommand} help\`.`;
+    function handleUnknown({ originalRequest }) {
+        const { command } = originalRequest;
+        return `:trophy: This is not how you win a game... Try \`${command} help\`.`;
     }
 
     function handleError(_, { response, message }) {
