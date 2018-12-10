@@ -29,13 +29,22 @@ function botFactory(challongeService, userRepository) {
         usage: showUsage,
     };
 
-    return async function handleMessage(message) {
-        const { text } = message;
-        const command = (text || defaultCommand).split(/\s+/)[0];
+    const callbackHandlers = {
+        usage: closeUsageCallback,
+    };
+
+    return async function bot(message) {
+        const { text, originalRequest } = message;
+        const { callback_id } = originalRequest;
+
+        const command = (text || '').split(/\s+/)[0];
+        const callback = (callback_id || '').split(/-/)[0];
 
         try {
-            const handleCommand = commandHandlers[command] || handleUnknown;
-            return await handleCommand(message);
+            const handleMessage = callback
+                ? callbackHandlers[callback] || handleUnknownCallback
+                : commandHandlers[command || defaultCommand] || handleUnknownCommand;
+            return await handleMessage(message);
         } catch (error) {
             return await handleError(message, error);
         }
@@ -142,19 +151,36 @@ function botFactory(challongeService, userRepository) {
             .addAttachment('usage')
             .addText(`Supported commands:\n${supportedCommandsString}`)
             .addColor('#252830')
+            .addAction('Close', 'close', 'close')
             .get();
     }
 
-    function handleUnknown({ originalRequest }) {
+    function closeUsageCallback({ originalRequest }) {
+        const { actions, callback_id } = originalRequest;
+        const shouldClose = R.any(({ name }) => name === 'close')(actions);
+        if (!shouldClose) {
+            throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+        }
+        return { delete_original: true }; // NOTE SlackTemplate doesn't support this flag
+    }
+
+    function handleUnknownCommand({ originalRequest }) {
         const { command } = originalRequest;
         return `:trophy: This is not how you win a game... Try \`${command} help\`.`;
+    }
+
+    function handleUnknownCallback({ originalRequest }) {
+        const { callback_id } = originalRequest;
+        throw new Error(`Missing handler for callback: ${callback_id}`);
     }
 
     function handleError(_, { response, message }) {
         const errorMessage = response
                 && `${response.status} – ${JSON.stringify(response.data)}`
             || message;
-        return `:crying_cat_face: There was an error: ${errorMessage}`;
+        return new SlackTemplate(`:crying_cat_face: There was an error: \`${errorMessage}\`.`)
+            .replaceOriginal(false)
+            .get();
     }
 };
 
