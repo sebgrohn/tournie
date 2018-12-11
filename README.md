@@ -1,6 +1,13 @@
-# challonge-bot
+# Challonge Bot
 
-Challonge bot for Slack
+Challonge bot for Slack, hosted as AWS Lambda.
+
+
+# Features
+
+* Listing open tournaments for configured Challonge organization.
+* Connecting Slack user with Challonge member by "logging in". Suggestions from
+  previous tournaments by configured Challonge organization.
 
 
 # Installation
