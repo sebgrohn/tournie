@@ -5,7 +5,7 @@ const { formatTimestamp, formatDescription, formatGameName, formatMatch } = requ
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
     ['whoami', 'show who you are on Challonge'],
-    ['login <challonge_username>', 'connect your Slack and Challonge accounts'],
+    ['login [<challonge_username>]', 'connect your Slack and Challonge accounts'],
     ['logout', 'disconnect your Slack and Challonge accounts'],
     ['next', 'list open matches in tournaments you are part of'],
     ['help|usage', 'show this information'],
@@ -30,6 +30,7 @@ function botFactory(challongeService, userRepository) {
     };
 
     const callbackHandlers = {
+        login: logInUserCallback,
         usage: closeUsageCallback,
     };
 
@@ -89,21 +90,64 @@ function botFactory(challongeService, userRepository) {
     }
 
     async function logInUser({ text, sender }) {
-        const user = await userRepository.getUser(sender);
+        let user = await userRepository.getUser(sender);
         if (user) {
             return `You are already logged in as *${user.challongeUsername}* (${user.challongeEmailHash ? 'verified' : 'unverified'}). :angry:`;
         }
 
         const challongeUsername = text.split(/\s+/)[1];
-        if (!challongeUsername) {
-            return 'You need to specify a Challonge username. :nerd_face:';
+        if (challongeUsername) {
+            const challongeMembers = await fetchMembers();
+            const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
+
+            user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
         }
 
         const challongeMembers = await fetchMembers();
-        const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
+        const response = new SlackTemplate()
+            .addAttachment('login')
+            .addText('Who are you? :simple_smile:')
+            .addColor('#252830');
+        response.getLatestAttachment().actions = [
+            {
+                type: 'select',
+                text: 'Select...',
+                name: 'username',
+                options: R.map(m => ({
+                    text: m.username,
+                    value: m.username,
+                }))(challongeMembers),
+            },
+        ];
+        return response.get();
+    }
 
-        await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
-        return `Congrats! You are now known as *${challongeUsername}* (${challongeEmailHash ? 'verified' : 'unverified'}). :tada:`;
+    async function logInUserCallback({ sender, originalRequest }) {
+        let user = await userRepository.getUser(sender);
+        if (!user) {
+            const { actions, callback_id } = originalRequest;
+            const { value: challongeUsername } = R.pipe(
+                R.filter(({ name }) => name === 'username'),
+                R.map(({ selected_options }) => selected_options),
+                R.unnest,
+                R.find(() => true),
+            )(actions) || {};
+
+            if (!challongeUsername) {
+                throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+            }
+
+            const challongeMembers = await fetchMembers();
+            const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
+
+            user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
+        }
+
+        return new SlackTemplate()
+            .addAttachment('login_verified')
+            .addText(`Who are you? :simple_smile:\n\nCongrats! You are now known as *${user.challongeUsername}* (${user.challongeEmailHash ? 'verified' : 'unverified'}). :tada:`)
+            .addColor('#252830')
+            .get();
     }
 
     async function logOutUser({ sender }) {
