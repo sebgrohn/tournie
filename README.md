@@ -1,6 +1,13 @@
-# challonge-bot
+# Challonge Bot
 
-Challonge bot for Slack
+Challonge bot for Slack, hosted as AWS Lambda.
+
+
+# Features
+
+* Listing open tournaments for configured Challonge organization.
+* Connecting Slack user with Challonge member by "logging in". Suggestions from
+  previous tournaments by configured Challonge organization.
 
 
 # Installation
@@ -15,6 +22,8 @@ Challonge bot for Slack
    ```
    npx claudia create --region eu-west-1 --api-module index --configure-slack-slash-app --profile claudia
    ```
+
+5. Add read / write policy for SimpleDB for the AWS IAM role (probably "challonge-bot-executor").
 
 # Re-deploy / update
 
