@@ -8,7 +8,7 @@ Challonge bot for Slack, hosted as AWS Lambda.
 * Listing open tournaments for configured Challonge organization.
 * Connecting Slack user with Challonge member by "logging in". Suggestions from
   previous tournaments by configured Challonge organization.
-
+* Listing next matches for user, for tournaments s/he is part of.
 
 # Installation
 

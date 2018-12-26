@@ -31,6 +31,21 @@ function challongeServiceFactory({ organization, apiKey }) {
         )(data);
     }
 
+    async function fetchTournament(tournamentId) {
+        const { data } = await challongeApi.get(`tournaments/${tournamentId}.json`, {
+            params: {
+                include_participants: 1,
+                include_matches: 1,
+            }
+        });
+        const { tournament } = data;
+        return {
+            ...tournament,
+            participants: R.map(({ participant }) => participant)(tournament.participants),
+            matches: R.map(({ match }) => match)(tournament.matches),
+        };
+    }
+
     async function fetchTournamentParticipants(tournamentId) {
         const { data } = await challongeApi.get(`tournaments/${tournamentId}/participants.json`);
         return R.map(({ participant }) => participant)(data);
@@ -44,7 +59,6 @@ function challongeServiceFactory({ organization, apiKey }) {
             R.map(({ id }) => id),
             R.map(fetchTournamentParticipants),
         )(tournaments);
-
         const participants = await Promise.all(participantsPromises);
 
         return R.pipe(
@@ -54,11 +68,50 @@ function challongeServiceFactory({ organization, apiKey }) {
         )(participants);
     }
 
+    async function fetchOpenMatchesForMember(memberEmailHash) {
+        const tournaments = await fetchOpenTournaments();
+
+        const tournamentsDetailsPromises = R.pipe(
+            R.map(({ id }) => id),
+            R.map(fetchTournament),
+        )(tournaments);
+        const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
+
+        const tournamentsById = R.pipe(
+            R.map(t => [t.id, t]),
+            R.fromPairs,
+        )(tournaments);
+
+        const participantsById = R.pipe(
+            R.map(({ participants }) => participants),
+            R.unnest,
+            R.map(p => [p.id, p]),
+            R.fromPairs,
+        )(tournamentsDetails);
+
+        return R.pipe(
+            R.map(({ matches }) => matches),
+            R.unnest,
+            R.filter(m => ['pending', 'open'].includes(m.state)),
+            R.map(m => ({
+                ...m,
+                tournament: tournamentsById[m.tournament_id],
+                player1: m.player1_id ? participantsById[m.player1_id] : null,
+                player2: m.player2_id ? participantsById[m.player2_id] : null,
+            })),
+            R.filter(({ player1, player2 }) =>
+                player1 && player1.email_hash === memberEmailHash
+                    || player2 && player2.email_hash === memberEmailHash),
+        )(tournamentsDetails);
+    }
+
     return {
         fetchAllTournaments,
         fetchOpenTournaments,
+        fetchTournament,
         fetchTournamentParticipants,
         fetchMembers,
+        fetchOpenMatchesForMember,
     };
 }
 
