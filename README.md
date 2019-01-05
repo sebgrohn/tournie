@@ -35,9 +35,14 @@ regarding future development.
 
 # Re-deploy / update
 
-To update the bot:
+To update the `development` version of the bot:
 ```
 npm run update
+```
+
+To tag the current version as `production` version:
+```
+npm run release
 ```
 
 

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "setup": "claudia create --profile claudia --region eu-west-1 --configure-slack-slash-app --api-module index --policies policies --timeout 6 --allow-recursion",
-    "update": "claudia update --profile claudia --cache-api-config",
+    "update": "claudia update --profile claudia --version development --cache-api-config",
+    "release": "claudia set-version --profile claudia --version production",
     "test": "jest"
   },
   "repository": {
