@@ -1,6 +1,6 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const { formatTimestamp, formatDescription, formatGameName, formatMatch } = require('./formatting');
+const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
 
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
@@ -12,8 +12,12 @@ const supportedCommands = [
 ];
 const defaultCommand = 'tournaments';
 
+const unknownUserResponse = new SlackTemplate('I don\'t know who you are. :crying_cat_face:')
+    .replaceOriginal(false)
+    .get();
+
 function botFactory(challongeService, userRepository) {
-    const { 
+    const {
         fetchOpenTournaments,
         fetchTournament,
         fetchMembers,
@@ -92,7 +96,7 @@ function botFactory(challongeService, userRepository) {
     async function signUpUserCallback({ sender, originalRequest }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
-            return 'I don\'t know who you are. :crying_cat_face:';
+            return unknownUserResponse;
         }
 
         const { actions, callback_id } = originalRequest;
@@ -112,16 +116,15 @@ function botFactory(challongeService, userRepository) {
 
     async function showCurrentUser({ sender }) {
         const user = await userRepository.getUser(sender);
-        if (!user) {
-            return 'I don\'t know who you are. :crying_cat_face:';
-        }
-        return `You are known as *${user.challongeUsername}* (${user.challongeEmailHash ? 'verified' : 'unverified'}). :ok_hand:`;
+        return user
+            ? `You are known as ${formatUser(user)}. :ok_hand:`
+            : unknownUserResponse;
     }
 
     async function logInUser({ text, sender }) {
         let user = await userRepository.getUser(sender);
         if (user) {
-            return `You are already logged in as *${user.challongeUsername}* (${user.challongeEmailHash ? 'verified' : 'unverified'}). :angry:`;
+            return `You are already logged in as ${formatUser(user)}. :angry:`;
         }
 
         const challongeUsername = text.split(/\s+/)[1];
@@ -130,6 +133,7 @@ function botFactory(challongeService, userRepository) {
             const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
 
             user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
+            return `Congrats! You are now known as ${formatUser(user)}. :tada:`;
         }
 
         const challongeMembers = await fetchMembers();
@@ -174,7 +178,7 @@ function botFactory(challongeService, userRepository) {
 
         return new SlackTemplate()
             .addAttachment('login_verified')
-            .addText(`Who are you? :simple_smile:\n\nCongrats! You are now known as *${user.challongeUsername}* (${user.challongeEmailHash ? 'verified' : 'unverified'}). :tada:`)
+            .addText(`Who are you? :simple_smile:\n\nCongrats! You are now known as ${formatUser(user)}. :tada:`)
             .addColor('#252830')
             .get();
     }
@@ -182,7 +186,7 @@ function botFactory(challongeService, userRepository) {
     async function logOutUser({ sender }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
-            return 'I don\'t know who you are. :crying_cat_face:';
+            return unknownUserResponse;
         }
         await userRepository.deleteUser(sender);
         return `Okay, you are now forgotten. I hope to see you later! :wave:`;
@@ -191,7 +195,7 @@ function botFactory(challongeService, userRepository) {
     async function listNextMatches({ sender }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
-            return 'I don\'t know who you are. :crying_cat_face:';
+            return unknownUserResponse;
         }
 
         const openMatches = await fetchOpenMatchesForMember(user.challongeEmailHash);
