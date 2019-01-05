@@ -15,8 +15,10 @@ const defaultCommand = 'tournaments';
 function botFactory(challongeService, userRepository) {
     const { 
         fetchOpenTournaments,
+        fetchTournament,
         fetchMembers,
         fetchOpenMatchesForMember,
+        addTournamentParticipant,
     } = challongeService;
 
     const commandHandlers = {
@@ -30,6 +32,7 @@ function botFactory(challongeService, userRepository) {
     };
 
     const callbackHandlers = {
+        tournament: signUpUserCallback,
         login: logInUserCallback,
         usage: closeUsageCallback,
     };
@@ -51,15 +54,17 @@ function botFactory(challongeService, userRepository) {
         }
     }
 
-    async function listOpenTournaments(message) {
-        const openTournaments = await fetchOpenTournaments();
+    async function listOpenTournaments({ sender }) {
+        const userPromise = userRepository.getUser(sender);
+        const openTournamentsPromise = fetchOpenTournaments();
+        const [user, openTournaments] = [await userPromise, await openTournamentsPromise];
 
         return openTournaments.length === 0
             ? 'There are no open tournaments. Is it time to start one? :thinking_face:'
             : R.reduce(
                 (response, t) => {
                     response
-                        .addAttachment(`tournament-${t.subdomain}-${t.id}`)
+                        .addAttachment(`tournament`)
                         .addTitle(t.name, t.full_challonge_url)
                         .addText(formatDescription(t.description))
                         .addColor('#252830')
@@ -69,9 +74,12 @@ function botFactory(challongeService, userRepository) {
                     if (t.started_at) {
                         response.addField('Started', formatTimestamp(t.started_at), true);
                     } else {
-                        response
-                            .addField('Created', formatTimestamp(t.created_at), true)
-                            .addLinkButton('Sign Up', t.sign_up_url);
+                        response.addField('Created', formatTimestamp(t.created_at), true);
+                        if (user) {
+                            response.addAction('Sign Up', 'sign_up', t.id);
+                        } else {
+                            response.addLinkButton('Sign Up', t.sign_up_url);
+                        }
                     }
 
                     return response.addField('State', `${t.state} (${t.progress_meter}%)`, true);
@@ -79,6 +87,27 @@ function botFactory(challongeService, userRepository) {
                 new SlackTemplate('*:trophy: Open tournaments: :trophy:*'),
             )(openTournaments)
                 .get();
+    }
+
+    async function signUpUserCallback({ sender, originalRequest }) {
+        const user = await userRepository.getUser(sender);
+        if (!user) {
+            return 'I don\'t know who you are. :crying_cat_face:';
+        }
+
+        const { actions, callback_id } = originalRequest;
+        const { value: tournamentId } = R.find(({ name }) => name === 'sign_up')(actions);
+
+        if (!tournamentId) {
+            throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+        }
+
+        const tournamentPromise = fetchTournament(tournamentId);
+        const addParticipantPromise = addTournamentParticipant(tournamentId, user.challongeUsername);
+        const [tournament] = [await tournamentPromise, await addParticipantPromise];
+        return new SlackTemplate(`Awesome! You are now signed up for tournament *${tournament.name}.* :tada:`)
+            .replaceOriginal(false)
+            .get();
     }
 
     async function showCurrentUser({ sender }) {
@@ -173,7 +202,7 @@ function botFactory(challongeService, userRepository) {
             ? 'You have no matches to play. :sweat_smile:'
             : R.reduce(
                 (response, m) => response
-                    .addAttachment(`match-${m.id}`)
+                    .addAttachment(`match`)
                     .addTitle(m.tournament.name, m.tournament.full_challonge_url)
                     .addText(formatMatch(m, user.challongeEmailHash))
                     .addColor('#252830')

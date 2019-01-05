@@ -105,6 +105,16 @@ function challongeServiceFactory({ organization, apiKey }) {
         )(tournamentsDetails);
     }
 
+    async function addTournamentParticipant(tournamentId, memberUsername, participantName = undefined) {
+        const { data } = await challongeApi.post(`tournaments/${tournamentId}/participants.json`, {
+            participant: {
+                challonge_username: memberUsername,
+                name: participantName,
+            },
+        });
+        return data.participant;
+    }
+
     return {
         fetchAllTournaments,
         fetchOpenTournaments,
@@ -112,6 +122,7 @@ function challongeServiceFactory({ organization, apiKey }) {
         fetchTournamentParticipants,
         fetchMembers,
         fetchOpenMatchesForMember,
+        addTournamentParticipant,
     };
 }
 
