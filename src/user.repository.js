@@ -1,17 +1,13 @@
-const AWS = require('aws-sdk');
 const R = require('ramda');
 
 const userDomain = 'tournie-users';
 
-function userRepositoryFactory({ region }) {
-    const simpleDb = new AWS.SimpleDB({ region });
-
-    const initialize = () =>
+const userRepository = {
+    initialize: db => () =>
         // NOTE createDomain does nothing when the domain already exists
-        simpleDb.createDomain({ DomainName: userDomain }).promise();
-
-    async function getUser(slackUserId) {
-        const { Attributes } = await simpleDb.getAttributes({
+        db.createDomain({ DomainName: userDomain }).promise(),
+    getUser: db => async function(slackUserId) {
+        const { Attributes } = await db.getAttributes({
             DomainName: userDomain,
             ItemName: slackUserId,
             AttributeNames: ['slackUserId', 'challongeUsername', 'challongeEmailHash'],
@@ -25,9 +21,8 @@ function userRepositoryFactory({ region }) {
             R.map(({ Name, Value }) => [Name, Value]),
             R.fromPairs,
         )(Attributes);
-    }
-
-    async function addUser(slackUserId, challongeUsername, challongeEmailHash = undefined) {
+    },
+    addUser: db => async function(slackUserId, challongeUsername, challongeEmailHash = undefined) {
         const user = { slackUserId, challongeUsername, challongeEmailHash };
         const attributes = R.pipe(
             R.toPairs,
@@ -35,27 +30,19 @@ function userRepositoryFactory({ region }) {
             R.filter(({ Value }) => Value),
         )(user);
 
-        await simpleDb.putAttributes({
+        await db.putAttributes({
             DomainName: userDomain,
             ItemName: slackUserId,
             Attributes: attributes,
         }).promise();
 
         return user;
-    }
-
-    const deleteUser = slackUserId =>
-        simpleDb.deleteAttributes({
+    },
+    deleteUser: db => slackUserId =>
+        db.deleteAttributes({
             DomainName: userDomain,
             ItemName: slackUserId,
-        }).promise();
-
-    return {
-        initialize,
-        getUser,
-        addUser,
-        deleteUser,
-    };
+        }).promise()
 }
 
-module.exports = userRepositoryFactory;
+module.exports = userRepository;
