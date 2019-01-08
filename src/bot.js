@@ -88,7 +88,7 @@ function botFactory(challongeService, userRepository) {
 
         const challongeUsername = text.split(/\s+/)[1];
         if (!challongeUsername) {
-            return 'Your need to specify a Challonge username. :nerd_face:';
+            return 'You need to specify a Challonge username. :nerd_face:';
         }
 
         const challongeMembers = await fetchMembers();
