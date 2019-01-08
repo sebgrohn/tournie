@@ -1,5 +1,4 @@
 const R = require('ramda');
-const axios = require('axios');
 
 function challongeServiceFactory({ api, organization }) {
 
