@@ -6,6 +6,7 @@ const userRepository = {
     initialize: db => () =>
         // NOTE createDomain does nothing when the domain already exists
         db.createDomain({ DomainName: userDomain }).promise(),
+
     getUser: db => async function(slackUserId) {
         const { Attributes } = await db.getAttributes({
             DomainName: userDomain,
@@ -22,6 +23,7 @@ const userRepository = {
             R.fromPairs,
         )(Attributes);
     },
+
     addUser: db => async function(slackUserId, challongeUsername, challongeEmailHash = undefined) {
         const user = { slackUserId, challongeUsername, challongeEmailHash };
         const attributes = R.pipe(
@@ -38,11 +40,12 @@ const userRepository = {
 
         return user;
     },
+
     deleteUser: db => slackUserId =>
         db.deleteAttributes({
             DomainName: userDomain,
             ItemName: slackUserId,
-        }).promise()
-}
+        }).promise(),
+};
 
 module.exports = userRepository;

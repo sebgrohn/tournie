@@ -1,7 +1,6 @@
 const R = require('ramda');
 
 function challongeServiceFactory({ api, organization }) {
-
     async function fetchAllTournaments() {
         const { data } = await api.get('tournaments.json', {
             params: {
