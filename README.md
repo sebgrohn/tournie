@@ -1,4 +1,4 @@
-# Challonge Bot
+# Challonge Bot [![Build Status](https://travis-ci.com/sebgrohn/challonge-bot.svg?branch=master)](https://travis-ci.com/sebgrohn/challonge-bot)
 
 Challonge bot for Slack, hosted as AWS Lambda.
 
