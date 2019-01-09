@@ -1,21 +1,21 @@
 {
-  "name": "challonge-bot",
+  "name": "tournie",
   "version": "0.0.1",
-  "description": "Challonge bot for Slack",
+  "description": "Tournie Challonge bot for Slack",
   "main": "index.js",
   "scripts": {
     "test": "jest"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sebgrohn/challonge-bot.git"
+    "url": "git+https://github.com/sebgrohn/tournie.git"
   },
   "author": "Sebastian Gröhn, Ben Bryant",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sebgrohn/challonge-bot/issues"
+    "url": "https://github.com/sebgrohn/tournie/issues"
   },
-  "homepage": "https://github.com/sebgrohn/challonge-bot",
+  "homepage": "https://github.com/sebgrohn/tournie",
   "dependencies": {
     "aws-sdk": "^2.373.0",
     "axios": "^0.18.0",

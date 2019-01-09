@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const R = require('ramda');
 
-const userDomain = 'challonge-bot-users';
+const userDomain = 'tournie-users';
 
 function userRepositoryFactory({ region }) {
     const simpleDb = new AWS.SimpleDB({ region });

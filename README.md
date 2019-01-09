@@ -1,6 +1,6 @@
-# Challonge Bot [![Build Status](https://travis-ci.com/sebgrohn/challonge-bot.svg?branch=master)](https://travis-ci.com/sebgrohn/challonge-bot)
+# Tournie Challonge bot [![Build Status](https://travis-ci.com/sebgrohn/tournie.svg?branch=master)](https://travis-ci.com/sebgrohn/tournie)
 
-Challonge bot for Slack, hosted as AWS Lambda.
+**Tournie,** the Challonge bot for Slack. Hosted as an AWS Lambda.
 
 
 # Features
@@ -9,6 +9,10 @@ Challonge bot for Slack, hosted as AWS Lambda.
 * Connecting Slack user with Challonge member by "logging in". Suggestions from
   previous tournaments by configured Challonge organization.
 * Listing next matches for user, for tournaments s/he is part of.
+
+See the [Primer wiki page](/sebgrohn/tournie/wiki/Primer-on-Tournie-Challonge-bot)
+regarding future development.
+
 
 # Installation
 
@@ -23,7 +27,7 @@ Challonge bot for Slack, hosted as AWS Lambda.
    npx claudia create --region eu-west-1 --api-module index --configure-slack-slash-app --profile claudia
    ```
 
-5. Add read / write policy for SimpleDB for the AWS IAM role (probably "challonge-bot-executor").
+5. Add read / write policy for SimpleDB for the AWS IAM role (probably "tournie-executor").
 
 # Re-deploy / update
 
