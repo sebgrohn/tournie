@@ -22,7 +22,7 @@ test('getUser', async () => {
 
     expect(mockFn.mock.calls.length).toBe(1);
     expect(mockFn.mock.calls[0][0]).toEqual({
-        DomainName: 'challonge-bot-users',
+        DomainName: 'tournie-users',
         ItemName: 'the user id',
         AttributeNames: ['slackUserId', 'challongeUsername', 'challongeEmailHash'],
     });
@@ -46,7 +46,7 @@ test('addUser', async () => {
 
     expect(mockFn.mock.calls.length).toBe(1);
     expect(mockFn.mock.calls[0][0]).toEqual({
-        DomainName: 'challonge-bot-users',
+        DomainName: 'tournie-users',
         ItemName: 'the user id',
         Attributes: [
             { Name: 'slackUserId', Value: 'the user id' },
