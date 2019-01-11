@@ -4,6 +4,8 @@
   "description": "Tournie Challonge bot for Slack",
   "main": "index.js",
   "scripts": {
+    "setup": "claudia create --profile claudia --region eu-west-1 --configure-slack-slash-app --api-module index --policies policies --timeout 6 --allow-recursion",
+    "update": "claudia update --profile claudia --cache-api-config",
     "test": "jest"
   },
   "repository": {

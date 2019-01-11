@@ -1,10 +1,9 @@
-const axios = require('axios');
 const botBuilder = require('claudia-bot-builder');
 const challongeServiceFactory = require('./src/challonge.service');
 const userRepositoryFactory = require('./src/user.repository');
 const botFactory = require('./src/bot');
 const challongeConfig = require('./challonge');
-const { lambda: { region } } = require('./claudia');
+const region = require('./aws-region');
 
 const challongeService = challongeServiceFactory(challongeConfig);
 const userRepository = userRepositoryFactory({ region });
