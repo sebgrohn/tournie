@@ -8,6 +8,7 @@
 * Listing open tournaments for configured Challonge organization.
 * Connecting Slack user with Challonge member by "logging in". Suggestions from
   previous tournaments by configured Challonge organization.
+* Sign up for open tournaments.
 * Listing next matches for user, for tournaments s/he is part of.
 
 See the [Primer wiki page](/sebgrohn/tournie/wiki/Primer-on-Tournie-Challonge-bot)

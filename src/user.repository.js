@@ -28,17 +28,20 @@ function userRepositoryFactory({ region }) {
     }
 
     async function addUser(slackUserId, challongeUsername, challongeEmailHash = undefined) {
+        const user = { slackUserId, challongeUsername, challongeEmailHash };
         const attributes = R.pipe(
             R.toPairs,
             R.map(([Name, Value]) => ({ Name, Value })),
             R.filter(({ Value }) => Value),
-        )({ slackUserId, challongeUsername, challongeEmailHash });
+        )(user);
 
         await simpleDb.putAttributes({
             DomainName: userDomain,
             ItemName: slackUserId,
             Attributes: attributes,
         }).promise();
+
+        return user;
     }
 
     const deleteUser = slackUserId =>
