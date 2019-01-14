@@ -1,16 +1,8 @@
 const R = require('ramda');
-const axios = require('axios');
 
-function challongeServiceFactory({ organization, apiKey }) {
-    const challongeApi = axios.create({
-        baseURL: 'https://api.challonge.com/v1/',
-        params: {
-            api_key: apiKey,
-        },
-    });
-
+function challongeServiceFactory({ api, organization }) {
     async function fetchAllTournaments() {
-        const { data } = await challongeApi.get('tournaments.json', {
+        const { data } = await api.get('tournaments.json', {
             params: {
                 subdomain: organization,
             },
@@ -19,7 +11,7 @@ function challongeServiceFactory({ organization, apiKey }) {
     }
 
     async function fetchOpenTournaments() {
-        const { data } = await challongeApi.get('tournaments.json', {
+        const { data } = await api.get('tournaments.json', {
             params: {
                 subdomain: organization,
                 // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
@@ -32,7 +24,7 @@ function challongeServiceFactory({ organization, apiKey }) {
     }
 
     async function fetchTournament(tournamentId) {
-        const { data } = await challongeApi.get(`tournaments/${tournamentId}.json`, {
+        const { data } = await api.get(`tournaments/${tournamentId}.json`, {
             params: {
                 include_participants: 1,
                 include_matches: 1,
@@ -47,7 +39,7 @@ function challongeServiceFactory({ organization, apiKey }) {
     }
 
     async function fetchTournamentParticipants(tournamentId) {
-        const { data } = await challongeApi.get(`tournaments/${tournamentId}/participants.json`);
+        const { data } = await api.get(`tournaments/${tournamentId}/participants.json`);
         return R.map(({ participant }) => participant)(data);
     }
 
@@ -106,7 +98,7 @@ function challongeServiceFactory({ organization, apiKey }) {
     }
 
     async function addTournamentParticipant(tournamentId, memberUsername, participantName = undefined) {
-        const { data } = await challongeApi.post(`tournaments/${tournamentId}/participants.json`, {
+        const { data } = await api.post(`tournaments/${tournamentId}/participants.json`, {
             participant: {
                 challonge_username: memberUsername,
                 name: participantName,
