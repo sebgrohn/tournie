@@ -11,7 +11,7 @@
 * Sign up for open tournaments.
 * Listing next matches for user, for tournaments s/he is part of.
 
-See the [Primer wiki page](/sebgrohn/tournie/wiki/Primer-on-Tournie-Challonge-bot)
+See the [Primer wiki page](https://github.com/sebgrohn/tournie/wiki/Primer-on-Tournie-Challonge-bot)
 regarding future development.
 
 
