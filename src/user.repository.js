@@ -3,9 +3,15 @@ const R = require('ramda');
 const userDomain = 'tournie-users';
 
 const userRepository = {
-    initialize: db => () =>
+    setUp: db => () =>
         // NOTE createDomain does nothing when the domain already exists
-        db.createDomain({ DomainName: userDomain }).promise(),
+        db.createDomain({ DomainName: userDomain }).promise()
+            .then(() => userDomain),
+
+    tearDown: db => () =>
+        // NOTE deleteDomain does nothing when the domain doesn't exists
+        db.deleteDomain({ DomainName: userDomain }).promise()
+            .then(() => userDomain),
 
     getUser: db => async function(slackUserId) {
         const { Attributes } = await db.getAttributes({

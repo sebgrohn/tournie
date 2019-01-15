@@ -22,7 +22,4 @@ const userRepository = userRepositoryFactory(simpleDb);
 const handlers = handlersFactory({ challongeService, userRepository });
 const bot = botFactory(handlers);
 
-// TODO this is an async operation; we don't know now if things go wrong...
-userRepository.initialize();
-
 module.exports = botBuilder(bot, { platforms: ['slackSlashCommand'] });
