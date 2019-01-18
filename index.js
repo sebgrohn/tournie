@@ -2,10 +2,10 @@ const { SimpleDB } = require('aws-sdk');
 const R = require('ramda');
 const axios = require('axios');
 const botBuilder = require('claudia-bot-builder');
-const challongeServiceFactory = require('./src/challonge.service');
 const botFactory = require('./src/bot');
 const { apiKey, organization } = require('./challonge');
 const region = require('./aws-region');
+const challongeServiceFactory = R.applySpec(require('./src/challonge.service'));
 const handlersFactory =  R.applySpec(require('./src/handlers'));
 const userRepositoryFactory = R.applySpec(require('./src/user.repository'));
 
