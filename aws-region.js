@@ -1,6 +1,7 @@
 
 let region;
 try {
+    // eslint-disable-next-line node/no-missing-require
     const { lambda } = require('./claudia');
     region = lambda.region;
 } catch (e) {

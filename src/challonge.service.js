@@ -7,7 +7,7 @@ const fetchAllTournaments = ({ api, organization }) => async function () {
         },
     });
     return R.map(({ tournament }) => tournament)(data);
-}
+};
 
 const fetchOpenTournaments = ({ api, organization }) => async function () {
     const { data } = await api.get('tournaments.json', {
@@ -20,14 +20,14 @@ const fetchOpenTournaments = ({ api, organization }) => async function () {
         R.map(({ tournament }) => tournament),
         R.filter(t => ['pending', 'underway'].includes(t.state)),
     )(data);
-}
+};
 
 const fetchTournament = ({ api }) => async function (tournamentId) {
     const { data } = await api.get(`tournaments/${tournamentId}.json`, {
         params: {
             include_participants: 1,
             include_matches: 1,
-        }
+        },
     });
     const { tournament } = data;
     return {
@@ -35,12 +35,12 @@ const fetchTournament = ({ api }) => async function (tournamentId) {
         participants: R.map(({ participant }) => participant)(tournament.participants),
         matches: R.map(({ match }) => match)(tournament.matches),
     };
-}
+};
 
 const fetchTournamentParticipants = ({ api }) => async function (tournamentId) {
     const { data } = await api.get(`tournaments/${tournamentId}/participants.json`);
     return R.map(({ participant }) => participant)(data);
-}
+};
 
 const fetchMembers = ({ api, organization }) => async function () {
     const tournaments = await fetchAllTournaments({ api, organization })();
@@ -57,7 +57,7 @@ const fetchMembers = ({ api, organization }) => async function () {
         R.uniqBy(({ email_hash }) => email_hash),
         R.map(R.pick(['username', 'email_hash', 'challonge_email_address_verified'])),
     )(participants);
-}
+};
 
 const fetchOpenMatchesForMember = ({ api, organization }) => async function (memberEmailHash) {
     const tournaments = await fetchOpenTournaments({ api, organization })();
@@ -94,7 +94,7 @@ const fetchOpenMatchesForMember = ({ api, organization }) => async function (mem
             player1 && player1.email_hash === memberEmailHash
                 || player2 && player2.email_hash === memberEmailHash),
     )(tournamentsDetails);
-}
+};
 
 const addTournamentParticipant = ({ api }) => async function (tournamentId, memberUsername, participantName = undefined) {
     const { data } = await api.post(`tournaments/${tournamentId}/participants.json`, {
@@ -104,7 +104,7 @@ const addTournamentParticipant = ({ api }) => async function (tournamentId, memb
         },
     });
     return data.participant;
-}
+};
 
 const challongeService = {
     fetchAllTournaments,
@@ -114,6 +114,6 @@ const challongeService = {
     fetchMembers,
     fetchOpenMatchesForMember,
     addTournamentParticipant,
-}
+};
 
 module.exports = challongeService;
