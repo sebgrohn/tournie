@@ -85,16 +85,16 @@ const handlers = {
             return `You are already logged in as ${formatUser(user)}. :angry:`;
         }
 
+        const challongeMembers = await challongeService.fetchMembers();
+        
         const challongeUsername = text.split(/\s+/)[1];
         if (challongeUsername) {
-            const challongeMembers = await challongeService.fetchMembers();
             const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
 
             user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
             return `Congrats! You are now known as ${formatUser(user)}. :tada:`;
         }
 
-        const challongeMembers = await challongeService.fetchMembers();
         const response = new SlackTemplate()
             .addAttachment('login')
             .addText('Who are you? :simple_smile:')
