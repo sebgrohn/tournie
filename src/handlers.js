@@ -121,7 +121,7 @@ const handlers = {
                 R.filter(({ name }) => name === 'username'),
                 R.map(({ selected_options }) => selected_options),
                 R.unnest,
-                R.find(() => true),
+                R.head,
             )(actions) || {};
 
             if (!challongeUsername) {
