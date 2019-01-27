@@ -55,7 +55,7 @@ const fetchMembers = ({ api, organization }) => async function () {
     return R.pipe(
         R.unnest,
         R.uniqBy(({ email_hash }) => email_hash),
-        R.map(R.pick(['username', 'email_hash', 'challonge_email_address_verified'])),
+        R.project(['username', 'email_hash', 'challonge_email_address_verified']),
     )(participants);
 };
 
