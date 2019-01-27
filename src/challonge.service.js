@@ -68,16 +68,12 @@ const fetchOpenMatchesForMember = ({ api, organization }) => async function (mem
     )(tournaments);
     const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
 
-    const tournamentsById = R.pipe(
-        R.map(t => [t.id, t]),
-        R.fromPairs,
-    )(tournaments);
+    const tournamentsById = R.indexBy(t => t.id)(tournaments);
 
     const participantsById = R.pipe(
         R.map(({ participants }) => participants),
         R.unnest,
-        R.map(p => [p.id, p]),
-        R.fromPairs,
+        R.indexBy(p => p.id),
     )(tournamentsDetails);
 
     return R.pipe(
