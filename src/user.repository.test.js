@@ -20,7 +20,7 @@ test('getUser', async () => {
     const slackUserId = 'the user id';
     const user = await userRepo.getUser(fakeDb)(slackUserId);
 
-    expect(mockFn.mock.calls.length).toBe(1);
+    expect(mockFn.mock.calls).toHaveLength(1);
     expect(mockFn.mock.calls[0][0]).toEqual({
         DomainName: 'tournie-users',
         ItemName: 'the user id',
@@ -44,7 +44,7 @@ test('addUser', async () => {
     const challongeUsername = 'the username';
     const user = await userRepo.addUser(fakeDb)(slackUserId, challongeUsername);
 
-    expect(mockFn.mock.calls.length).toBe(1);
+    expect(mockFn.mock.calls).toHaveLength(1);
     expect(mockFn.mock.calls[0][0]).toEqual({
         DomainName: 'tournie-users',
         ItemName: 'the user id',

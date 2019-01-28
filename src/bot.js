@@ -34,7 +34,7 @@ function botFactory(handlers) {
         } catch (error) {
             return await handleError(message, error);
         }
-    }
+    };
 
     function handleUnknownCommand({ originalRequest }) {
         const { command } = originalRequest;
@@ -54,6 +54,6 @@ function botFactory(handlers) {
             .replaceOriginal(false)
             .get();
     }
-};
+}
 
 module.exports = botFactory;

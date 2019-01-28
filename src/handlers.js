@@ -26,7 +26,7 @@ const handlers = {
             : R.reduce(
                 (response, t) => {
                     response
-                        .addAttachment(`tournament`)
+                        .addAttachment('tournament')
                         .addTitle(t.name, t.full_challonge_url)
                         .addText(formatDescription(t.description))
                         .addColor('#252830')
@@ -141,13 +141,13 @@ const handlers = {
             .get();
     },
 
-    logOutUser: ({ challongeService, userRepository }) => async function ({ sender }) {
+    logOutUser: ({ userRepository }) => async function ({ sender }) {
         const user = await userRepository.getUser(sender);
         if (!user) {
             return unknownUserResponse;
         }
         await userRepository.deleteUser(sender);
-        return `Okay, you are now forgotten. I hope to see you later! :wave:`;
+        return 'Okay, you are now forgotten. I hope to see you later! :wave:';
     },
 
     listNextMatches: ({ challongeService, userRepository }) => async function ({ sender }) {
@@ -164,7 +164,7 @@ const handlers = {
             ? 'You have no matches to play. :sweat_smile:'
             : R.reduce(
                 (response, m) => response
-                    .addAttachment(`match`)
+                    .addAttachment('match')
                     .addTitle(m.tournament.name, m.tournament.full_challonge_url)
                     .addText(formatMatch(m, user.challongeEmailHash))
                     .addColor('#252830')

@@ -2,11 +2,16 @@
   "name": "tournie",
   "version": "0.0.1",
   "description": "Tournie Challonge bot for Slack",
+  "engines": {
+    "node": ">=8.10"
+  },
   "main": "index.js",
   "scripts": {
     "setup": "claudia create --profile claudia --region eu-west-1 --configure-slack-slash-app --api-module index --policies policies --timeout 6 --allow-recursion",
     "update": "claudia update --profile claudia --cache-api-config",
-    "test": "jest"
+    "eslint": "eslint .",
+    "jest": "jest",
+    "test": "npm run eslint && npm run jest"
   },
   "repository": {
     "type": "git",
@@ -27,10 +32,10 @@
   },
   "devDependencies": {
     "claudia": "^5.2.0",
-    "eslint": "^5.9.0",
-    "eslint-config-airbnb": "^17.1.0",
-    "eslint-plugin-import": "^2.14.0",
+    "eslint": "^5.12.1",
     "eslint-plugin-jest": "^22.0.1",
+    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-promise": "^4.0.1",
     "jest": "^23.6.0"
   }
 }

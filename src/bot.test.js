@@ -40,5 +40,5 @@ test('whoami', async () => {
         },
     };
     await bot(message);
-    expect(mockFn.mock.calls.length).toBe(1);
+    expect(mockFn.mock.calls).toHaveLength(1);
 });
