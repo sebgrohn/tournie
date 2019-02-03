@@ -5,10 +5,10 @@ const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
     ['whoami', 'show who you are on Challonge'],
-    ['login [<challonge_username>]', 'connect your Slack and Challonge accounts'],
-    ['logout', 'disconnect your Slack and Challonge accounts'],
+    ['connect [<challonge_username>]', 'connect your Slack and Challonge accounts'],
+    ['disconnect', 'disconnect your Slack and Challonge accounts'],
     ['next', 'list open matches in tournaments you are part of'],
-    ['help|usage', 'show this information'],
+    ['help', 'show this information'],
 ];
 
 const unknownUserResponse = new SlackTemplate('I don\'t know who you are. :crying_cat_face:')

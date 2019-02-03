@@ -6,11 +6,13 @@ function botFactory(handlers) {
     const commandHandlers = {
         tournaments: handlers.listOpenTournaments,
         whoami: handlers.showCurrentUser,
-        login: handlers.logInUser,
-        logout: handlers.logOutUser,
+        connect: handlers.logInUser,
+        disconnect: handlers.logOutUser,
+        login: handlers.logInUser, // alias for easy discovery
+        logout: handlers.logOutUser, // alias for easy discovery
         next: handlers.listNextMatches,
         help: handlers.showUsage,
-        usage: handlers.showUsage,
+        usage: handlers.showUsage, // alias for easy discovery
     };
 
     const callbackHandlers = {
