@@ -1,6 +1,7 @@
 const R = require('ramda');
-const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
+const { InvalidCallbackActionError } = require('./handlers.errors');
+const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
 
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
@@ -61,7 +62,7 @@ const handlers = {
         const { value: tournamentId } = R.find(({ name }) => name === 'sign_up')(actions);
 
         if (!tournamentId) {
-            throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+            throw new InvalidCallbackActionError(originalRequest);
         }
 
         const tournamentPromise = challongeService.fetchTournament(tournamentId);
@@ -74,9 +75,10 @@ const handlers = {
 
     showCurrentUser: ({ userRepository }) => async function ({ sender }) {
         const user = await userRepository.getUser(sender);
-        return user
-            ? `You are known as ${formatUser(user)}. :ok_hand:`
-            : unknownUserResponse;
+        if (!user) {
+            return unknownUserResponse;
+        }
+        return `You are known as ${formatUser(user)}. :ok_hand:`;
     },
 
     logInUser: ({ challongeService, userRepository }) => async function ({ text, sender }) {
@@ -104,9 +106,9 @@ const handlers = {
                 type: 'select',
                 text: 'Select...',
                 name: 'username',
-                options: R.map(m => ({
-                    text: m.username,
-                    value: m.username,
+                options: R.map(({ username }) => ({
+                    text: username,
+                    value: username,
                 }))(challongeMembers),
             },
         ];
@@ -125,7 +127,7 @@ const handlers = {
             )(actions) || {};
 
             if (!challongeUsername) {
-                throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+                throw new InvalidCallbackActionError(originalRequest);
             }
 
             const challongeMembers = await challongeService.fetchMembers();
@@ -194,7 +196,7 @@ const handlers = {
         const { actions, callback_id } = originalRequest;
         const shouldClose = R.any(({ name }) => name === 'close')(actions);
         if (!shouldClose) {
-            throw new Error(`Invalid action value(s) for callback: ${callback_id}`);
+            throw new InvalidCallbackActionError(originalRequest);
         }
         return { delete_original: true }; // NOTE SlackTemplate doesn't support this flag
     },
