@@ -18,7 +18,7 @@ const fetchOpenTournaments = ({ api, organization }) => async function () {
     });
     return R.pipe(
         R.map(({ tournament }) => tournament),
-        R.filter(t => ['pending', 'underway'].includes(t.state)),
+        R.filter(({ state }) => ['pending', 'underway'].includes(state)),
     )(data);
 };
 
@@ -36,26 +36,22 @@ const fetchTournament = ({ api }) => async function (tournamentId) {
     })(tournament);
 };
 
-const fetchTournamentParticipants = ({ api }) => async function (tournamentId) {
-    const { data } = await api.get(`tournaments/${tournamentId}/participants.json`);
-    return R.map(({ participant }) => participant)(data);
-};
-
 const fetchMembers = ({ api, organization }) => async function () {
     const tournaments = await fetchAllTournaments({ api, organization })();
 
-    const participantsPromises = R.pipe(
+    const tournamentsDetailsPromises = R.pipe(
         R.take(5),
         R.map(({ id }) => id),
-        R.map(fetchTournamentParticipants({ api })),
+        R.map(fetchTournament({ api })),
     )(tournaments);
-    const participants = await Promise.all(participantsPromises);
+    const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
 
     return R.pipe(
+        R.map(({ participants }) => participants),
         R.unnest,
         R.uniqBy(({ email_hash }) => email_hash),
         R.project(['username', 'email_hash', 'challonge_email_address_verified']),
-    )(participants);
+    )(tournamentsDetails);
 };
 
 const fetchOpenMatchesForMember = ({ api, organization }) => async function (memberEmailHash) {
@@ -78,7 +74,7 @@ const fetchOpenMatchesForMember = ({ api, organization }) => async function (mem
     return R.pipe(
         R.map(({ matches }) => matches),
         R.unnest,
-        R.filter(m => ['pending', 'open'].includes(m.state)),
+        R.filter(({ state }) => ['pending', 'open'].includes(state)),
         R.map(m => ({
             ...m,
             tournament: tournamentsById[m.tournament_id],
@@ -105,7 +101,6 @@ const challongeService = {
     fetchAllTournaments,
     fetchOpenTournaments,
     fetchTournament,
-    fetchTournamentParticipants,
     fetchMembers,
     fetchOpenMatchesForMember,
     addTournamentParticipant,
