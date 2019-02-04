@@ -29,10 +29,13 @@ const handlers = {
                     response
                         .addAttachment('tournament')
                         .addTitle(t.name, t.full_challonge_url)
-                        .addText(formatDescription(t.description))
                         .addColor('#252830')
                         .addField('Tournament', `${formatGameName(t.game_name)} – ${t.tournament_type}`, true)
                         .addField('# Players', `${t.participants_count} / ${t.signup_cap}`, true);
+
+                    if (t.description) {
+                        response.addText(formatDescription(t.description));
+                    }
 
                     if (t.started_at) {
                         response.addField('Started', formatTimestamp(t.started_at), true);
