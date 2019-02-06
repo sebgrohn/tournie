@@ -30,11 +30,10 @@ const fetchTournament = ({ api }) => async function (tournamentId) {
         },
     });
     const { tournament } = data;
-    return {
-        ...tournament,
-        participants: R.map(({ participant }) => participant)(tournament.participants),
-        matches: R.map(({ match }) => match)(tournament.matches),
-    };
+    return R.evolve({
+        participants: R.map(({ participant }) => participant),
+        matches: R.map(({ match }) => match),
+    })(tournament);
 };
 
 const fetchTournamentParticipants = ({ api }) => async function (tournamentId) {
@@ -55,7 +54,7 @@ const fetchMembers = ({ api, organization }) => async function () {
     return R.pipe(
         R.unnest,
         R.uniqBy(({ email_hash }) => email_hash),
-        R.map(R.pick(['username', 'email_hash', 'challonge_email_address_verified'])),
+        R.project(['username', 'email_hash', 'challonge_email_address_verified']),
     )(participants);
 };
 
@@ -68,16 +67,12 @@ const fetchOpenMatchesForMember = ({ api, organization }) => async function (mem
     )(tournaments);
     const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
 
-    const tournamentsById = R.pipe(
-        R.map(t => [t.id, t]),
-        R.fromPairs,
-    )(tournaments);
+    const tournamentsById = R.indexBy(t => t.id)(tournaments);
 
     const participantsById = R.pipe(
         R.map(({ participants }) => participants),
         R.unnest,
-        R.map(p => [p.id, p]),
-        R.fromPairs,
+        R.indexBy(p => p.id),
     )(tournamentsDetails);
 
     return R.pipe(
