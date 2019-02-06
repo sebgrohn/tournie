@@ -30,11 +30,10 @@ const fetchTournament = ({ api }) => async function (tournamentId) {
         },
     });
     const { tournament } = data;
-    return {
-        ...tournament,
-        participants: R.map(({ participant }) => participant)(tournament.participants),
-        matches: R.map(({ match }) => match)(tournament.matches),
-    };
+    return R.evolve({
+        participants: R.map(({ participant }) => participant),
+        matches: R.map(({ match }) => match),
+    })(tournament);
 };
 
 const fetchTournamentParticipants = ({ api }) => async function (tournamentId) {
