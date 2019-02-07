@@ -47,8 +47,7 @@ const fetchMembers = ({ api, organization }) => async function () {
     const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
 
     return R.pipe(
-        R.map(({ participants }) => participants),
-        R.unnest,
+        R.chain(({ participants }) => participants),
         R.uniqBy(({ email_hash }) => email_hash),
         R.project(['username', 'email_hash', 'challonge_email_address_verified']),
     )(tournamentsDetails);
@@ -66,14 +65,12 @@ const fetchOpenMatchesForMember = ({ api, organization }) => async function (mem
     const tournamentsById = R.indexBy(t => t.id)(tournaments);
 
     const participantsById = R.pipe(
-        R.map(({ participants }) => participants),
-        R.unnest,
+        R.chain(({ participants }) => participants),
         R.indexBy(p => p.id),
     )(tournamentsDetails);
 
     return R.pipe(
-        R.map(({ matches }) => matches),
-        R.unnest,
+        R.chain(({ matches }) => matches),
         R.filter(({ state }) => ['pending', 'open'].includes(state)),
         R.map(m => ({
             ...m,
