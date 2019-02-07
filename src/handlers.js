@@ -2,6 +2,7 @@ const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const { InvalidCallbackActionError } = require('./handlers.errors');
 const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
+const { parseCallbackValue } = require('./handlers.utils');
 
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
@@ -61,9 +62,7 @@ const handlers = {
             return unknownUserResponse;
         }
 
-        const { actions, callback_id } = originalRequest;
-        const { value: tournamentId } = R.find(({ name }) => name === 'sign_up')(actions);
-
+        const tournamentId = parseCallbackValue('sign_up', originalRequest);
         if (!tournamentId) {
             throw new InvalidCallbackActionError(originalRequest);
         }
@@ -121,14 +120,7 @@ const handlers = {
     logInUserCallback: ({ challongeService, userRepository }) => async function ({ sender, originalRequest }) {
         let user = await userRepository.getUser(sender);
         if (!user) {
-            const { actions, callback_id } = originalRequest;
-            const { value: challongeUsername } = R.pipe(
-                R.filter(({ name }) => name === 'username'),
-                R.map(({ selected_options }) => selected_options),
-                R.unnest,
-                R.head,
-            )(actions) || {};
-
+            const challongeUsername = parseCallbackValue('username', originalRequest);
             if (!challongeUsername) {
                 throw new InvalidCallbackActionError(originalRequest);
             }
@@ -196,8 +188,7 @@ const handlers = {
     },
 
     closeUsageCallback: () => function ({ originalRequest }) {
-        const { actions, callback_id } = originalRequest;
-        const shouldClose = R.any(({ name }) => name === 'close')(actions);
+        const shouldClose = !!parseCallbackValue('close', originalRequest);
         if (!shouldClose) {
             throw new InvalidCallbackActionError(originalRequest);
         }
