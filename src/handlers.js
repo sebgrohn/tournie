@@ -9,6 +9,7 @@ const supportedCommands = [
     ['whoami', 'show who you are on Challonge'],
     ['connect [<challonge_username>]', 'connect your Slack and Challonge accounts'],
     ['disconnect', 'disconnect your Slack and Challonge accounts'],
+    ['signup', 'sign up for a tournament'],
     ['next', 'list open matches in tournaments you are part of'],
     ['help', 'show this information'],
 ];
@@ -145,6 +146,36 @@ const logOutUser = chain(
     },
 );
 
+
+const signUpUser = chain(
+    validateUser,
+    ({ challongeService }) => async message => {
+        const { user } = message;
+        const notSignedUpTournaments = await challongeService.fetchTournamentsForMember(user.challongeEmailHash, false);
+        return notSignedUpTournaments.length > 0
+            ? Promise.resolve(notSignedUpTournaments)
+            : Promise.reject('There are currently no tournaments where you can sign up.');
+    },
+    () => async function (notSignedUpTournaments) {
+        const response = new SlackTemplate()
+            .addAttachment('signup')
+            .addText('What tournament do you want to join? :simple_smile:')
+            .addColor('#252830');
+        response.getLatestAttachment().actions = [
+            {
+                type: 'select',
+                text: 'Select...',
+                name: 'sign_up',
+                options: R.map(({ id, name }) => ({
+                    text: name,
+                    value: id,
+                }))(notSignedUpTournaments),
+            },
+        ];
+        return response.get();
+    },
+);
+
 const listNextMatches = ({ challongeService, userRepository }) => async function ({ sender }) {
     const user = await userRepository.getUser(sender);
     if (!user) {
@@ -197,6 +228,7 @@ module.exports = {
     logInUser,
     logInUserCallback,
     logOutUser,
+    signUpUser,
     listNextMatches,
     showUsage,
     closeUsageCallback,
