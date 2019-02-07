@@ -12,14 +12,16 @@ function botFactory(handlers) {
         disconnect: handlers.logOutUser,
         login: handlers.logInUser, // alias for easy discovery
         logout: handlers.logOutUser, // alias for easy discovery
+        signup: handlers.signUpUser,
         next: handlers.listNextMatches,
         help: handlers.showUsage,
         usage: handlers.showUsage, // alias for easy discovery
     };
 
     const callbackHandlers = {
-        tournament: handlers.signUpUserCallback,
+        tournament: handlers.signUpUserFromListCallback,
         login: handlers.logInUserCallback,
+        signup: handlers.signUpUserCallback,
         usage: handlers.closeUsageCallback,
     };
 

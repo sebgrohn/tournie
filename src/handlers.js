@@ -9,6 +9,7 @@ const supportedCommands = [
     ['whoami', 'show who you are on Challonge'],
     ['connect [<challonge_username>]', 'connect your Slack and Challonge accounts'],
     ['disconnect', 'disconnect your Slack and Challonge accounts'],
+    ['signup', 'sign up for a tournament'],
     ['next', 'list open matches in tournaments you are part of'],
     ['help', 'show this information'],
 ];
@@ -55,7 +56,7 @@ const listOpenTournaments = chain(
             .get(),
 );
 
-const signUpUserCallback = chain(
+const signUpUserFromListCallback = chain(
     validateCallbackValue('sign_up', 'tournamentId'),
     concurrent(
         validateUser,
@@ -136,6 +137,55 @@ const logOutUser = chain(
     },
 );
 
+const signUpUser = chain(
+    validateUser,
+    ({ challongeService }) => async ({ user }) => {
+        const notSignedUpTournaments = await challongeService.fetchOpenTournamentsForMember(user.challongeEmailHash, { signedUp: false, includeUnderway: false });
+        return notSignedUpTournaments.length > 0
+            ? Promise.resolve(notSignedUpTournaments)
+            : Promise.reject(new HandlerError('There are currently no tournaments where you can sign up.'));
+    },
+    () => notSignedUpTournaments => {
+        const response = new SlackTemplate()
+            .addAttachment('signup')
+            .addText('What tournament do you want to join? :simple_smile:')
+            .addColor('#252830');
+        response.getLatestAttachment().actions = [
+            {
+                type: 'select',
+                text: 'Select...',
+                name: 'sign_up',
+                options: R.map(({ id, name }) => ({
+                    text: name,
+                    value: id,
+                }))(notSignedUpTournaments),
+            },
+        ];
+        return response.get();
+    },
+);
+
+const signUpUserCallback = chain(
+    validateCallbackValue('sign_up', 'tournamentId'),
+    concurrent(
+        validateUser,
+        ({ challongeService }) => async ({ tournamentId }) => {
+            const tournament = await challongeService.fetchTournament(tournamentId);
+            return tournament
+                ? Promise.resolve({ tournament })
+                : Promise.reject(new HandlerError(`Tournament not found: ${tournamentId}`));
+        },
+    ),
+    ({ challongeService }) => async ({ user, tournamentId, tournament }) => {
+        await challongeService.addTournamentParticipant(tournamentId, user.challongeUsername);
+        return new SlackTemplate()
+            .addAttachment('signup')
+            .addText(`What tournament do you want to join? :simple_smile:\n\nAwesome! You are now signed up for tournament *${tournament.name}.* :tada:`)
+            .addColor('#252830')
+            .get();
+    },
+);
+
 const listNextMatches = chain(
     validateUser,
     ({ challongeService }) => async ({ user }) => {
@@ -181,11 +231,13 @@ const closeUsageCallback = chain(
 
 module.exports = {
     listOpenTournaments,
-    signUpUserCallback,
+    signUpUserFromListCallback,
     showCurrentUser,
     logInUser,
     logInUserCallback,
     logOutUser,
+    signUpUser,
+    signUpUserCallback,
     listNextMatches,
     showUsage,
     closeUsageCallback,
