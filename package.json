@@ -28,6 +28,8 @@
     "axios": "^0.18.0",
     "claudia-bot-builder": "^4.5.0",
     "ramda": "^0.26.1",
+    "sanctuary": "^0.15.0",
+    "sanctuary-either": "^1.0.0",
     "slackify-html": "^1.0.1"
   },
   "devDependencies": {
