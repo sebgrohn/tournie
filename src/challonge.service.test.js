@@ -1,67 +1,64 @@
-const challongeService = require('./challonge.service');
 const R = require('ramda');
+const challongeService = require('./challonge.service');
+
 const memberView = R.pick(['username', 'email_hash', 'challonge_email_address_verified']);
 
-const organization = 'company'; // use the same org for all tests...
+const organization = 'company'; // use the same org for all tests
 
 const p1 = { id: 'p1', username: 'username1', email_hash: 'email_hash1', challonge_email_address_verified: 'challonge_email_address_verified1' };
 const p2 = { id: 'p2', username: 'username2', email_hash: 'email_hash2', challonge_email_address_verified: 'challonge_email_address_verified2' };
 const p3 = { id: 'p3', username: 'username3', email_hash: 'email_hash3', challonge_email_address_verified: 'challonge_email_address_verified3' };
+
 const t1 = {
     id: 't1',
     state: 'underway',
-    participants: [ { participant: p1 }, { participant: p2 } ],
-    matches: [ { match: { state: 'open', player1_id: 'p1', player2_id: 'p2' } } ],
+    participants: [
+        { participant: p1 }, 
+        { participant: p2 },
+    ],
+    matches: [ 
+        { match: { state: 'open', player1_id: 'p1', player2_id: 'p2' } },
+    ],
 };
-const t2 = { id: 't2', state: 'not open', participants: [], matches: [] };
+const t2 = {
+    id: 't2',
+    state: 'not open',
+    participants: [
+        { participant: p1 },
+        { participant: p3 },
+    ],
+    matches: [],
+};
+
 const mockApi = spyFunc => ({
     get: async (route, query) => {
         spyFunc(route, query);
-        let res;
         switch (route) {
             case 'tournaments.json':
-                res = {
+                return {
                     data: [
                         { tournament: t1 },
                         { tournament: t2 },
                     ],
                 };
-                break;
             case 'tournaments/t1.json':
-                res = {
+                return {
                     data: { tournament: t1 },
                 };
-                break;
             case 'tournaments/t2.json':
-                res = {
+                return {
                     data: { tournament: t2 },
                 };
-                break;
-            case 'tournaments/t1/participants.json':
-                res = {
-                    data: [
-                        { participant: p1 },
-                        { participant: p2 },
-                    ],
-                };
-                break;
-            case 'tournaments/t2/participants.json':
-                res = {
-                    data: [
-                        { participant: p1 },
-                        { participant: p3 },
-                    ],
-                };
-                break;
+            default:
+                return undefined;
         }
-        return res;
     },
+
     post: async (route, query) => {
         spyFunc(route, query);
-        const res = {
+        return {
             data: { participant: query },
         };
-        return res;
     },
 });
 
@@ -99,36 +96,31 @@ test('fetchTournament', async () => {
     expect(spyFunc.mock.calls).toHaveLength(1);
     expect(spyFunc.mock.calls[0])
         .toEqual(['tournaments/t2.json', { params: { include_matches: 1, include_participants: 1 } }]);
-    expect(tournament).toEqual(t2);
-});
-
-test('fetchTournamentParticipants', async () => {
-    const tournamentId = 't1';
-    const spyFunc = jest.fn();
-    const api = mockApi(spyFunc);
-    const tournaments = await challongeService
-        .fetchTournamentParticipants({ api, organization })(tournamentId);
-
-    expect(spyFunc.mock.calls).toHaveLength(1);
-    expect(spyFunc.mock.calls[0])
-        .toEqual(['tournaments/t1/participants.json', undefined]);
-    expect(tournaments).toEqual([p1, p2]);
+    expect(tournament).toEqual({
+        id: 't2',
+        state: 'not open',
+        participants: [
+            { id: 'p1', username: 'username1', email_hash: 'email_hash1', challonge_email_address_verified: 'challonge_email_address_verified1' },
+            { id: 'p3', username: 'username3', email_hash: 'email_hash3', challonge_email_address_verified: 'challonge_email_address_verified3' },
+        ],
+        matches: [],
+    });
 });
 
 test('fetchMembers', async () => {
     const spyFunc = jest.fn();
     const api = mockApi(spyFunc);
-    const tournaments = await challongeService
+    const members = await challongeService
         .fetchMembers({ api, organization })();
 
     expect(spyFunc.mock.calls).toHaveLength(3);
     expect(spyFunc.mock.calls[0])
         .toEqual(['tournaments.json', { params: { subdomain: 'company' } }]);
     expect(spyFunc.mock.calls[1])
-        .toEqual(['tournaments/t1/participants.json', undefined]);
+        .toEqual(['tournaments/t1.json', { params: { include_matches: 1, include_participants: 1 } }]);
     expect(spyFunc.mock.calls[2])
-        .toEqual(['tournaments/t2/participants.json', undefined]);
-    expect(tournaments).toEqual([
+        .toEqual(['tournaments/t2.json', { params: { include_matches: 1, include_participants: 1 } }]);
+    expect(members).toEqual([
         memberView(p1),
         memberView(p2),
         memberView(p3),
