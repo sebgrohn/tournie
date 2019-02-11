@@ -1,13 +1,15 @@
 {
     "plugins": [
-        "promise"
+        "promise",
+        "ramda"
     ],
     "extends": [
         "eslint:recommended",
         "plugin:node/recommended",
         "plugin:promise/recommended",
         "plugin:jest/recommended",
-        "plugin:jest/style"
+        "plugin:jest/style",
+        "plugin:ramda/recommended"
     ],
     "rules": {
         "indent": [
