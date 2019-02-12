@@ -1,19 +1,27 @@
 const R = require('ramda');
+const S = require('sanctuary');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const { InvalidCallbackActionError } = require('./handlers.errors');
 
 const chain = (...fs) => deps =>
     R.pipe(
         R.map(f => f(deps)),
-        R.pipeWith((f, v) => Promise.resolve(v).then(f)),
+        R.pipeWith((f, p) => Promise.resolve(p)
+            .then(e => S.isRight(e)
+                ? f(S.fromEither({})(e))
+                : e)),
     )(fs);
 
-const concurrent = (...fs) => deps => message =>
+const concurrent = (...fs) => deps => v =>
     R.pipe(
         R.map(f => f(deps)),
-        R.map(f => f(message)),
-        vs => Promise.all(vs)
-            .then(R.reduce((acc, v) => ({ ...acc, ...v }), {})),
+        R.map(f => f(v)),
+        ps => Promise.all(ps),
+        p => p.then(R.reduce(
+            (accE, e) => S.chain(
+                acc => S.map(R.mergeRight(acc))(e),
+            )(accE),
+        )(S.Right({}))),
     )(fs);
 
 const validateUser = ({ userRepository }) => async message => {
