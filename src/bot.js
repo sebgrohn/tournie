@@ -1,4 +1,6 @@
+const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
+const { InvalidUserInputError } = require('./handlers.errors');
 
 const defaultCommand = 'tournaments';
 
@@ -10,6 +12,7 @@ function botFactory(handlers) {
         disconnect: handlers.logOutUser,
         login: handlers.logInUser, // alias for easy discovery
         logout: handlers.logOutUser, // alias for easy discovery
+        signup: handlers.signUpUser,
         next: handlers.listNextMatches,
         help: handlers.showUsage,
         usage: handlers.showUsage, // alias for easy discovery
@@ -18,6 +21,7 @@ function botFactory(handlers) {
     const callbackHandlers = {
         tournament: handlers.signUpUserCallback,
         login: handlers.logInUserCallback,
+        signup: handlers.signUpUserCallback,
         usage: handlers.closeUsageCallback,
     };
 
@@ -34,7 +38,11 @@ function botFactory(handlers) {
                 : commandHandlers[command || defaultCommand] || handleUnknownCommand;
             return await handleMessage(message);
         } catch (error) {
-            return await handleError(message, error);
+            return await R.cond([
+                [e => e instanceof InvalidUserInputError, e => e.message],
+                [e => e instanceof Error, e => handleError(message, e)],
+                [R.T, R.identity],
+            ])(error);
         }
     };
 

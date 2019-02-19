@@ -53,6 +53,27 @@ const fetchMembers = ({ api, organization }) => async function () {
     )(tournamentsDetails);
 };
 
+const fetchTournamentsForMember = ({ api, organization }) => async function (memberEmailHash, signedUp) {
+    const tournaments = await fetchOpenTournaments({ api, organization })();
+
+    const tournamentsDetailsPromises = R.pipe(
+        R.map(({ id }) => id),
+        R.map(fetchTournament({ api })),
+    )(tournaments);
+    const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
+
+    const filterFunc = signedUp
+        ? R.any
+        : R.none;
+
+    return R.pipe(
+        R.filter(({ state }) => state === 'pending'),
+        R.filter(({ participants }) =>
+            filterFunc(({ email_hash }) => email_hash === memberEmailHash)(participants),
+        ),
+    )(tournamentsDetails);
+};
+
 const fetchOpenMatchesForMember = ({ api, organization }) => async function (memberEmailHash) {
     const tournaments = await fetchOpenTournaments({ api, organization })();
 
@@ -99,6 +120,7 @@ const challongeService = {
     fetchOpenTournaments,
     fetchTournament,
     fetchMembers,
+    fetchTournamentsForMember,
     fetchOpenMatchesForMember,
     addTournamentParticipant,
 };
