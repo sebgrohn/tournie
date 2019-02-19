@@ -28,20 +28,20 @@ const validateUser = ({ userRepository }) => async message => {
     const { sender } = message;
     const user = await userRepository.getUser(sender);
     return user
-        ? Promise.resolve({ ...message, user })
-        : Promise.reject(
+        ? S.Right({ ...message, user })
+        : S.Left(
             new SlackTemplate('I don\'t know who you are. :crying_cat_face:')
                 .replaceOriginal(false)
                 .get(),
         );
 };
 
-const validateCallbackValue = actionName => () => async message => {
+const validateCallbackValue = actionName => () => message => {
     const { originalRequest } = message;
     const callbackValue = parseCallbackValue(actionName, originalRequest);
     return callbackValue
-        ? Promise.resolve({ ...message, callbackValue })
-        : Promise.reject(new InvalidCallbackActionError(originalRequest));
+        ? S.Right({ ...message, callbackValue })
+        : S.Left(new InvalidCallbackActionError(originalRequest));
 };
 
 const parseCallbackValue = (actionName, { actions }) =>
