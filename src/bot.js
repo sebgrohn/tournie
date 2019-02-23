@@ -27,19 +27,36 @@ function botFactory(handlers) {
         const { text, originalRequest } = message;
         const { callback_id } = originalRequest;
 
-        const command = (text || '').split(/\s+/)[0];
-        const callback = (callback_id || '').split(/-/)[0];
+        const command = R.pipe(
+            R.split(/\s+/),
+            R.head,
+        )(text || '');
 
+        const callback = R.pipe(
+            R.split(/-/),
+            R.head,
+        )(callback_id || '');
+
+        const isDebug = R.pipe(
+            R.split(/\s+/),
+            R.map(R.equals('--debug')),
+            R.last,
+        )(text || '');
+
+        let response;
         try {
             const handleMessage = callback
                 ? callbackHandlers[callback] || handleUnknownCallback
                 : commandHandlers[command || defaultCommand] || handleUnknownCommand;
-            return await handleMessage(message);
+            response = await handleMessage(message);
         } catch (error) {
-            return error instanceof HandlerError
+            response = error instanceof HandlerError
                 ? error.userMessage
                 : handleError(error);
         }
+        return isDebug
+            ? JSON.stringify(response)
+            : response;
     };
 
     function handleUnknownCommand({ originalRequest }) {
@@ -53,11 +70,11 @@ function botFactory(handlers) {
     }
 
     function handleError(error) {
-        const { response, message } = error;
-        const errorMessage = response
-                && `${response.status} – ${JSON.stringify(response.data)}`
-            || message
-            || error;
+        const errorMessage = R.cond([
+            [R.has('response'), ({ response }) => `${response.status} – ${JSON.stringify(response.data)}`],
+            [R.is(Error), ({ message }) => message],
+            [R.T, R.identity],
+        ])(error);
         return new SlackTemplate(`:crying_cat_face: There was an error: \`${errorMessage}\`.`)
             .replaceOriginal(false)
             .get();
