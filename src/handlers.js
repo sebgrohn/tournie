@@ -1,6 +1,6 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const { InvalidCallbackActionError } = require('./handlers.errors');
+const HandlerError = require('./HandlerError');
 const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
 const { parseCallbackValue } = require('./handlers.utils');
 
@@ -63,7 +63,7 @@ const signUpUserCallback = ({ challongeService, userRepository }) => async funct
 
     const tournamentId = parseCallbackValue('sign_up', originalRequest);
     if (!tournamentId) {
-        throw new InvalidCallbackActionError(originalRequest);
+        throw new HandlerError(originalRequest);
     }
 
     const tournamentPromise = challongeService.fetchTournament(tournamentId);
@@ -121,7 +121,7 @@ const logInUserCallback = ({ challongeService, userRepository }) => async functi
     if (!user) {
         const challongeUsername = parseCallbackValue('username', originalRequest);
         if (!challongeUsername) {
-            throw new InvalidCallbackActionError(originalRequest);
+            throw new HandlerError(originalRequest);
         }
 
         const challongeMembers = await challongeService.fetchMembers();
@@ -189,7 +189,7 @@ const showUsage = () => function ({ originalRequest }) {
 const closeUsageCallback = () => function ({ originalRequest }) {
     const shouldClose = !!parseCallbackValue('close', originalRequest);
     if (!shouldClose) {
-        throw new InvalidCallbackActionError(originalRequest);
+        throw new HandlerError(originalRequest);
     }
     return { delete_original: true }; // NOTE SlackTemplate doesn't support this flag
 };

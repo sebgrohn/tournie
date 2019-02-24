@@ -9,10 +9,8 @@ test('handleUnknownCallback', async () => {
         },
     };
     const res = await bot(message);
-    expect(res).toHaveProperty('text');
-    const { text } = res;
-    expect(text)
-        .toBe(':crying_cat_face: There was an error: `Missing handler for callback: someUnknownCallback`.');
+    expect(res)
+        .toBe('Missing handler for callback: someUnknownCallback');
 });
 
 test('handleUnknownCommand', async () => {

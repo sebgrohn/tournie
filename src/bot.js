@@ -1,4 +1,6 @@
+const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
+const HandlerError = require('./HandlerError');
 
 const defaultCommand = 'tournaments';
 
@@ -34,7 +36,9 @@ function botFactory(handlers) {
                 : commandHandlers[command || defaultCommand] || handleUnknownCommand;
             return await handleMessage(message);
         } catch (error) {
-            return await handleError(message, error);
+            return error instanceof HandlerError
+                ? error.userMessage
+                : handleError(error);
         }
     };
 
@@ -45,13 +49,15 @@ function botFactory(handlers) {
 
     function handleUnknownCallback({ originalRequest }) {
         const { callback_id } = originalRequest;
-        throw new Error(`Missing handler for callback: ${callback_id}`);
+        throw new HandlerError(`Missing handler for callback: ${callback_id}`);
     }
 
-    function handleError(_, { response, message }) {
+    function handleError(error) {
+        const { response, message } = error;
         const errorMessage = response
                 && `${response.status} – ${JSON.stringify(response.data)}`
-            || message;
+            || message
+            || error;
         return new SlackTemplate(`:crying_cat_face: There was an error: \`${errorMessage}\`.`)
             .replaceOriginal(false)
             .get();
