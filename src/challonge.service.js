@@ -4,22 +4,15 @@ const fetchAllTournaments = ({ api, organization }) => async function () {
     const { data } = await api.get('tournaments.json', {
         params: {
             subdomain: organization,
+            // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
         },
     });
     return R.map(({ tournament }) => tournament)(data);
 };
 
 const fetchOpenTournaments = ({ api, organization }) => async function () {
-    const { data } = await api.get('tournaments.json', {
-        params: {
-            subdomain: organization,
-            // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
-        },
-    });
-    return R.pipe(
-        R.map(({ tournament }) => tournament),
-        R.filter(({ state }) => ['pending', 'underway'].includes(state)),
-    )(data);
+    const tournaments = await fetchAllTournaments({ api, organization })();
+    return R.filter(({ state }) => ['pending', 'underway'].includes(state))(tournaments);
 };
 
 const fetchTournament = ({ api }) => async function (tournamentId) {
