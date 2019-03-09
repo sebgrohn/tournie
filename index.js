@@ -7,7 +7,7 @@ const botFactory = require('./src/bot');
 const { apiKey, organization } = require('./challonge');
 const region = require('./aws-region');
 const challongeServiceFactory = R.applySpec(require('./src/challonge.service'));
-const handlersFactory =  R.applySpec(require('./src/handlers'));
+const handlersFactory = R.applySpec(require('./src/handlers'));
 const userRepositoryFactory = R.applySpec(require('./src/user.repository'));
 
 const api = axios.create({
@@ -18,7 +18,7 @@ const api = axios.create({
 });
 const simpleDb = new SimpleDB({ region });
 
-const challongeService =  challongeServiceFactory({ api, organization });
+const challongeService = challongeServiceFactory({ api, organization });
 const userRepository = userRepositoryFactory(simpleDb);
 const handlers = handlersFactory({ challongeService, userRepository });
 const bot = botFactory(handlers);
