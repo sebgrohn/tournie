@@ -15,15 +15,15 @@ const supportedCommands = [
 ];
 
 const listOpenTournaments = chain(
-    concurrent(
-        tryGetUser,
-        ({ challongeService }) => async () => {
-            const openTournaments = await challongeService.fetchOpenTournaments();
-            return openTournaments.length > 0
-                ? Promise.resolve({ openTournaments })
-                : Promise.reject(new HandlerError('There are no open tournaments. Is it time to start one? :thinking_face:'));
-        },
-    ),
+    tryGetUser,
+    ({ challongeService }) => async ({ user }) => {
+        const openTournaments = user
+            ? await challongeService.fetchOpenTournamentsForMember(user.challongeEmailHash)
+            : await challongeService.fetchOpenTournaments();
+        return openTournaments.length > 0
+            ? Promise.resolve({ user, openTournaments })
+            : Promise.reject(new HandlerError('There are no open tournaments. Is it time to start one? :thinking_face:'));
+    },
     () => ({ user, openTournaments }) =>
         R.reduce(
             (response, t) => {
@@ -42,14 +42,21 @@ const listOpenTournaments = chain(
                     response.addField('Started', formatTimestamp(t.started_at), true);
                 } else {
                     response.addField('Created', formatTimestamp(t.created_at), true);
-                    if (user) {
-                        response.addAction('Sign Up', 'sign_up', t.id);
-                    } else {
-                        response.addLinkButton('Sign Up', t.sign_up_url);
-                    }
                 }
 
-                return response.addField('State', `${t.state} (${t.progress_meter}%)`, true);
+                response.addField('State', `${t.state} (${t.progress_meter}%)`, true);
+
+                if (user) {
+                    if (t.is_signed_up) {
+                        response.addField('Signed up', 'Yes', true);
+                    } else {
+                        response.addAction('Sign Up', 'sign_up', t.id);
+                    }
+                } else if (!t.started_at) {
+                    response.addLinkButton('Sign Up', t.sign_up_url);
+                }
+
+                return response;
             },
             new SlackTemplate('*:trophy: Open tournaments: :trophy:*'),
         )(openTournaments)
