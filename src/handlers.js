@@ -1,8 +1,8 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const { InvalidCallbackActionError } = require('./handlers.errors');
+const HandlerError = require('./HandlerError');
+const { chain, concurrent, validateUser, tryGetUser, validateNoUser, validateCallbackValue } = require('./handlers.utils');
 const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
-const { parseCallbackValue } = require('./handlers.utils');
 
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
@@ -13,18 +13,18 @@ const supportedCommands = [
     ['help', 'show this information'],
 ];
 
-const unknownUserResponse = new SlackTemplate('I don\'t know who you are. :crying_cat_face:')
-    .replaceOriginal(false)
-    .get();
-
-const listOpenTournaments = ({ challongeService, userRepository }) => async function ({ sender }) {
-    const userPromise = userRepository.getUser(sender);
-    const openTournamentsPromise = challongeService.fetchOpenTournaments();
-    const [user, openTournaments] = [await userPromise, await openTournamentsPromise];
-
-    return openTournaments.length === 0
-        ? 'There are no open tournaments. Is it time to start one? :thinking_face:'
-        : R.reduce(
+const listOpenTournaments = chain(
+    concurrent(
+        tryGetUser,
+        ({ challongeService }) => async () => {
+            const openTournaments = await challongeService.fetchOpenTournaments();
+            return openTournaments.length > 0
+                ? Promise.resolve({ openTournaments })
+                : Promise.reject(new HandlerError('There are no open tournaments. Is it time to start one? :thinking_face:'));
+        },
+    ),
+    () => ({ user, openTournaments }) =>
+        R.reduce(
             (response, t) => {
                 response
                     .addAttachment('tournament')
@@ -52,115 +52,103 @@ const listOpenTournaments = ({ challongeService, userRepository }) => async func
             },
             new SlackTemplate('*:trophy: Open tournaments: :trophy:*'),
         )(openTournaments)
-            .get();
-};
+            .get(),
+);
 
-const signUpUserCallback = ({ challongeService, userRepository }) => async function ({ sender, originalRequest }) {
-    const user = await userRepository.getUser(sender);
-    if (!user) {
-        return unknownUserResponse;
-    }
-
-    const tournamentId = parseCallbackValue('sign_up', originalRequest);
-    if (!tournamentId) {
-        throw new InvalidCallbackActionError(originalRequest);
-    }
-
-    const tournamentPromise = challongeService.fetchTournament(tournamentId);
-    const addParticipantPromise = challongeService.addTournamentParticipant(tournamentId, user.challongeUsername);
-    const [tournament] = [await tournamentPromise, await addParticipantPromise];
-    return new SlackTemplate(`Awesome! You are now signed up for tournament *${tournament.name}.* :tada:`)
-        .replaceOriginal(false)
-        .get();
-};
-
-const showCurrentUser = ({ userRepository }) => async function ({ sender }) {
-    const user = await userRepository.getUser(sender);
-    if (!user) {
-        return unknownUserResponse;
-    }
-    return `You are known as ${formatUser(user)}. :ok_hand:`;
-};
-
-const logInUser = ({ challongeService, userRepository }) => async function ({ text, sender }) {
-    let user = await userRepository.getUser(sender);
-    if (user) {
-        return `You are already logged in as ${formatUser(user)}. :angry:`;
-    }
-
-    const challongeMembers = await challongeService.fetchMembers();
-    
-    const challongeUsername = text.split(/\s+/)[1];
-    if (challongeUsername) {
-        const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
-
-        user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
-        return `Congrats! You are now known as ${formatUser(user)}. :tada:`;
-    }
-
-    const response = new SlackTemplate()
-        .addAttachment('login')
-        .addText('Who are you? :simple_smile:')
-        .addColor('#252830');
-    response.getLatestAttachment().actions = [
-        {
-            type: 'select',
-            text: 'Select...',
-            name: 'username',
-            options: R.map(({ username }) => ({
-                text: username,
-                value: username,
-            }))(challongeMembers),
+const signUpUserCallback = chain(
+    validateCallbackValue('sign_up', 'tournamentId'),
+    concurrent(
+        validateUser,
+        ({ challongeService }) => async ({ tournamentId }) => {
+            const tournament = await challongeService.fetchTournament(tournamentId);
+            return tournament
+                ? Promise.resolve({ tournament })
+                : Promise.reject(new HandlerError(`Tournament not found: ${tournamentId}`));
         },
-    ];
-    return response.get();
-};
+    ),
+    ({ challongeService }) => async ({ user, tournamentId, tournament }) => {
+        await challongeService.addTournamentParticipant(tournamentId, user.challongeUsername);
+        return new SlackTemplate(`Awesome! You are now signed up for tournament *${tournament.name}.* :tada:`)
+            .replaceOriginal(false)
+            .get();
+    },
+);
 
-const logInUserCallback = ({ challongeService, userRepository }) => async function ({ sender, originalRequest }) {
-    let user = await userRepository.getUser(sender);
-    if (!user) {
-        const challongeUsername = parseCallbackValue('username', originalRequest);
-        if (!challongeUsername) {
-            throw new InvalidCallbackActionError(originalRequest);
+const showCurrentUser = chain(
+    validateUser,
+    () => ({ user }) => `You are known as ${formatUser(user)}. :ok_hand:`,
+);
+
+const logInUser = chain(
+    validateNoUser,
+    ({ challongeService, userRepository }) => async ({ text, sender }) => {
+        const challongeMembers = await challongeService.fetchMembers();
+
+        const challongeUsername = text.split(/\s+/)[1];
+        if (challongeUsername) {
+            const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
+
+            const user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
+            return `Congrats! You are now known as ${formatUser(user)}. :tada:`;
         }
 
+        const response = new SlackTemplate()
+            .addAttachment('login')
+            .addText('Who are you? :simple_smile:')
+            .addColor('#252830');
+        response.getLatestAttachment().actions = [
+            {
+                type: 'select',
+                text: 'Select...',
+                name: 'username',
+                options: R.map(({ username }) => ({
+                    text: username,
+                    value: username,
+                }))(challongeMembers),
+            },
+        ];
+        return response.get();
+    },
+);
+
+const logInUserCallback = chain(
+    validateNoUser,
+    validateCallbackValue('username', 'challongeUsername'),
+    ({ challongeService, userRepository }) => async ({ sender, challongeUsername }) => {
         const challongeMembers = await challongeService.fetchMembers();
         const { email_hash: challongeEmailHash } = R.find(m => m.username === challongeUsername)(challongeMembers) || {};
 
-        user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
-    }
+        const user = await userRepository.addUser(sender, challongeUsername, challongeEmailHash);
 
-    return new SlackTemplate()
-        .addAttachment('login_verified')
-        .addText(`Who are you? :simple_smile:\n\nCongrats! You are now known as ${formatUser(user)}. :tada:`)
-        .addColor('#252830')
-        .get();
-};
+        return new SlackTemplate()
+            .addAttachment('login_verified')
+            .addText(`Who are you? :simple_smile:\n\nCongrats! You are now known as ${formatUser(user)}. :tada:`)
+            .addColor('#252830')
+            .get();
+    },
+);
 
-const logOutUser = ({ userRepository }) => async function ({ sender }) {
-    const user = await userRepository.getUser(sender);
-    if (!user) {
-        return unknownUserResponse;
-    }
-    await userRepository.deleteUser(sender);
-    return 'Okay, you are now forgotten. I hope to see you later! :wave:';
-};
+const logOutUser = chain(
+    validateUser,
+    ({ userRepository }) => async ({ sender }) => {
+        await userRepository.deleteUser(sender);
+        return 'Okay, you are now forgotten. I hope to see you later! :wave:';
+    },
+);
 
-const listNextMatches = ({ challongeService, userRepository }) => async function ({ sender }) {
-    const user = await userRepository.getUser(sender);
-    if (!user) {
-        return unknownUserResponse;
-    }
-
-    const openMatches = await challongeService.fetchOpenMatchesForMember(user.challongeEmailHash);
-
-    // TODO get users corresponding to opponents to show matching Slack nicks
-
-    return openMatches.length === 0
-        ? 'You have no matches to play. :sweat_smile:'
-        : R.reduce(
+const listNextMatches = chain(
+    validateUser,
+    ({ challongeService }) => async ({ user }) => {
+        const openMatches = await challongeService.fetchOpenMatchesForMember(user.challongeEmailHash);
+        return openMatches.length > 0
+            ? Promise.resolve({ openMatches })
+            : Promise.reject(new HandlerError('You have no matches to play. :sweat_smile:'));
+    },
+    () => ({ user, openMatches }) =>
+        R.reduce(
             (response, m) => response
                 .addAttachment('match')
+                // TODO get users corresponding to opponents to show matching Slack nicks
                 .addTitle(m.tournament.name, m.tournament.full_challonge_url)
                 .addText(formatMatch(m, user.challongeEmailHash))
                 .addColor('#252830')
@@ -168,10 +156,10 @@ const listNextMatches = ({ challongeService, userRepository }) => async function
                 .addField('Match opened', m.started_at ? formatTimestamp(m.started_at) : 'Pending opponent', true),
             new SlackTemplate('*:trophy: Your open matches: :trophy:*'),
         )(openMatches)
-            .get();
-};
+            .get(),
+);
 
-const showUsage = () => function ({ originalRequest }) {
+const showUsage = () => ({ originalRequest }) => {
     const { command } = originalRequest;
     const supportedCommandsString = R.pipe(
         R.map(([c, d]) => `• \`${command} ${c}\` to ${d}`),
@@ -180,19 +168,16 @@ const showUsage = () => function ({ originalRequest }) {
 
     return new SlackTemplate()
         .addAttachment('usage')
-        .addText(`Supported commands:\n${supportedCommandsString}`)
+        .addText(`*Supported commands:*\n${supportedCommandsString}`)
         .addColor('#252830')
         .addAction('Close', 'close', 'close')
         .get();
 };
 
-const closeUsageCallback = () => function ({ originalRequest }) {
-    const shouldClose = !!parseCallbackValue('close', originalRequest);
-    if (!shouldClose) {
-        throw new InvalidCallbackActionError(originalRequest);
-    }
-    return { delete_original: true }; // NOTE SlackTemplate doesn't support this flag
-};
+const closeUsageCallback = chain(
+    validateCallbackValue('close'),
+    () => () => ({ delete_original: true }), // NOTE SlackTemplate doesn't support this flag
+);
 
 module.exports = {
     listOpenTournaments,
