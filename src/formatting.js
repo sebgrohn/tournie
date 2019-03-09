@@ -6,6 +6,8 @@ const formatTimestamp = isoTimestampString => isoTimestampString;
 const formatDescription = description =>
     slackify(description.replace(/<\s*br\s*\/?\s*>/, '\n'));
 
+const formatTournamentType = (gameName, tournamentType) => `${formatGameName(gameName)} – ${tournamentType}`;
+
 function formatGameName(gameName) {
     switch (gameName.toLowerCase()) {
         case 'table tennis':
@@ -35,6 +37,7 @@ const formatParticipant = (participant, currentUserEmailHash) => participant
 module.exports = {
     formatTimestamp,
     formatDescription,
+    formatTournamentType,
     formatGameName,
     formatNumPlayers,
     formatUser,
