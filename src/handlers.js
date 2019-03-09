@@ -2,7 +2,7 @@ const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const HandlerError = require('./HandlerError');
 const { chain, concurrent, validateUser, tryGetUser, validateNoUser, validateCallbackValue } = require('./handlers.utils');
-const { formatTimestamp, formatDescription, formatGameName, formatUser, formatMatch } = require('./formatting');
+const { formatTimestamp, formatDescription, formatGameName, formatNumPlayers, formatUser, formatMatch } = require('./formatting');
 
 const supportedCommands = [
     ['[tournaments]', 'list open tournaments'],
@@ -31,7 +31,7 @@ const listOpenTournaments = chain(
                     .addTitle(t.name, t.full_challonge_url)
                     .addColor('#252830')
                     .addField('Tournament', `${formatGameName(t.game_name)} – ${t.tournament_type}`, true)
-                    .addField('# Players', `${t.participants_count} / ${t.signup_cap}`, true);
+                    .addField('# Players', formatNumPlayers(t.participants_count, t.signup_cap), true);
 
                 if (t.description) {
                     response.addText(formatDescription(t.description));

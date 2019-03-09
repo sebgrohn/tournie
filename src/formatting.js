@@ -17,6 +17,10 @@ function formatGameName(gameName) {
     }
 }
 
+const formatNumPlayers = (participantsCount, signupCap) => signupCap
+    ? `${participantsCount} / ${signupCap}`
+    : `${participantsCount}`;
+
 const formatUser = ({ challongeUsername, challongeEmailHash }) => `*${challongeUsername}* (${challongeEmailHash ? 'verified' : 'unverified'})`;
 
 const formatMatch = (match, currentUserEmailHash) =>
@@ -32,6 +36,7 @@ module.exports = {
     formatTimestamp,
     formatDescription,
     formatGameName,
+    formatNumPlayers,
     formatUser,
     formatMatch,
     formatParticipant,
