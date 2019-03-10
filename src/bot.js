@@ -1,6 +1,6 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const HandlerError = require('./HandlerError');
+const HandlerError = require('./handlers/HandlerError');
 
 const defaultCommand = 'tournaments';
 

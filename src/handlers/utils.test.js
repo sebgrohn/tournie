@@ -1,4 +1,4 @@
-const { chain, concurrent } = require('./handlers.utils');
+const { chain, concurrent } = require('./utils');
 
 const deps = { service: () => 1 };
 
