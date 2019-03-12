@@ -147,7 +147,7 @@ const logOutUser = chain(
 const signUpUser = chain(
     validateUser,
     ({ challongeService }) => async ({ user }) => {
-        const notSignedUpTournaments = await challongeService.fetchOpenTournamentsForMember(user.challongeEmailHash, { signedUp: false, includeUnderway: false });
+        const notSignedUpTournaments = await challongeService.fetchOpenTournamentsForMember(user.challongeEmailHash, { signedUpFilter: false, includeUnderway: false });
         return notSignedUpTournaments.length > 0
             ? Promise.resolve(notSignedUpTournaments)
             : Promise.reject(new HandlerError('There are currently no tournaments where you can sign up.'));
