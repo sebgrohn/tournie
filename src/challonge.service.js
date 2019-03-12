@@ -49,7 +49,7 @@ const fetchMembers = ({ api, organization }) => async function () {
     )(tournamentsDetails);
 };
 
-const fetchOpenTournamentsForMember = ({ api, organization }) => async function (memberEmailHash, { signedUp = undefined, includeUnderway = true } = {}) {
+const fetchOpenTournamentsForMember = ({ api, organization }) => async function (memberEmailHash, { signedUpFilter = undefined, includeUnderway = true } = {}) {
     const tournaments = await fetchOpenTournaments({ api, organization })(includeUnderway);
 
     const tournamentsDetailsPromises = R.pipe(
@@ -58,18 +58,12 @@ const fetchOpenTournamentsForMember = ({ api, organization }) => async function 
     )(tournaments);
     const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
 
-    const filterFunc = R.cond([
-        [R.equals(true), () => R.equals(true)],
-        [R.equals(false), () => R.equals(false)],
-        [R.T, () => R.T],
-    ])(signedUp);
-
     return R.pipe(
         R.map(t => ({
             ...t,
             is_signed_up: R.any(({ email_hash }) => email_hash === memberEmailHash)(t.participants),
         })),
-        R.filter(({ is_signed_up }) => filterFunc(is_signed_up)),
+        R.filter(({ is_signed_up }) => R.isNil(signedUpFilter) || is_signed_up === signedUpFilter),
     )(tournamentsDetails);
 };
 

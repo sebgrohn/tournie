@@ -165,7 +165,7 @@ test('fetchOpenTournamentsForMember signed up', async () => {
     const spyFunc = jest.fn();
     const api = mockApi(spyFunc);
     const tournaments = await challongeService
-        .fetchOpenTournamentsForMember({ api, organization })(memberEmailHash, { signedUp: true });
+        .fetchOpenTournamentsForMember({ api, organization })(memberEmailHash, { signedUpFilter: true });
 
     expect(spyFunc.mock.calls).toHaveLength(4);
     expect(spyFunc.mock.calls[0])
@@ -208,7 +208,7 @@ test('fetchOpenTournamentsForMember NOT signed up', async () => {
     const spyFunc = jest.fn();
     const api = mockApi(spyFunc);
     const tournaments = await challongeService
-        .fetchOpenTournamentsForMember({ api, organization })(memberEmailHash, { signedUp: false });
+        .fetchOpenTournamentsForMember({ api, organization })(memberEmailHash, { signedUpFilter: false });
 
     expect(spyFunc.mock.calls).toHaveLength(4);
     expect(spyFunc.mock.calls[0])
