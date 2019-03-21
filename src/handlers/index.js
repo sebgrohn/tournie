@@ -1,6 +1,6 @@
 
 module.exports = {
-    ...require('./handlers'),
+    ...require('./usage.handlers'),
     ...require('./tournaments.handlers'),
     ...require('./users.handlers'),
     ...require('./signUp.handlers'),

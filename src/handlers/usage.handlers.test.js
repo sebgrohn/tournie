@@ -1,4 +1,4 @@
-const handlers = require('./handlers');
+const handlers = require('./usage.handlers');
 
 test('showUsage', () => {
     const req = {
