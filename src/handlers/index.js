@@ -4,4 +4,5 @@ module.exports = {
     ...require('./tournaments.handlers'),
     ...require('./users.handlers'),
     ...require('./signUp.handlers'),
+    ...require('./matches.handlers'),
 };
