@@ -1,2 +1,5 @@
 
-module.exports = require('./handlers');
+module.exports = {
+    ...require('./handlers'),
+    ...require('./tournaments.handlers'),
+};
