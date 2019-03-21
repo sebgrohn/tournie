@@ -4,22 +4,18 @@ const fetchAllTournaments = ({ api, organization }) => async function () {
     const { data } = await api.get('tournaments.json', {
         params: {
             subdomain: organization,
+            // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
         },
     });
     return R.map(({ tournament }) => tournament)(data);
 };
 
-const fetchOpenTournaments = ({ api, organization }) => async function () {
-    const { data } = await api.get('tournaments.json', {
-        params: {
-            subdomain: organization,
-            // state: '...', // one of 'all', 'pending', 'in_progress', 'ended'
-        },
-    });
-    return R.pipe(
-        R.map(({ tournament }) => tournament),
-        R.filter(({ state }) => ['pending', 'underway'].includes(state)),
-    )(data);
+const fetchOpenTournaments = ({ api, organization }) => async function (includeUnderway = true) {
+    const validStates = includeUnderway
+        ? ['pending', 'underway']
+        : ['pending'];
+    const tournaments = await fetchAllTournaments({ api, organization })();
+    return R.filter(({ state }) => validStates.includes(state))(tournaments);
 };
 
 const fetchTournament = ({ api }) => async function (tournamentId) {
@@ -50,6 +46,24 @@ const fetchMembers = ({ api, organization }) => async function () {
         R.chain(({ participants }) => participants),
         R.uniqBy(({ email_hash }) => email_hash),
         R.project(['username', 'email_hash', 'challonge_email_address_verified']),
+    )(tournamentsDetails);
+};
+
+const fetchOpenTournamentsForMember = ({ api, organization }) => async function (memberEmailHash, { signedUpFilter = undefined, includeUnderway = true } = {}) {
+    const tournaments = await fetchOpenTournaments({ api, organization })(includeUnderway);
+
+    const tournamentsDetailsPromises = R.pipe(
+        R.map(({ id }) => id),
+        R.map(fetchTournament({ api })),
+    )(tournaments);
+    const tournamentsDetails = await Promise.all(tournamentsDetailsPromises);
+
+    return R.pipe(
+        R.map(t => ({
+            ...t,
+            is_signed_up: R.any(({ email_hash }) => email_hash === memberEmailHash)(t.participants),
+        })),
+        R.filter(({ is_signed_up }) => R.isNil(signedUpFilter) || is_signed_up === signedUpFilter),
     )(tournamentsDetails);
 };
 
@@ -99,6 +113,7 @@ const challongeService = {
     fetchOpenTournaments,
     fetchTournament,
     fetchMembers,
+    fetchOpenTournamentsForMember,
     fetchOpenMatchesForMember,
     addTournamentParticipant,
 };

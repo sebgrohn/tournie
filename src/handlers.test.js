@@ -2,8 +2,9 @@ const handlers = require('./handlers');
 
 test('listOpenTournaments', async () => {
     const challongeService = {
-        fetchOpenTournaments: async () => [
+        fetchOpenTournamentsForMember: async () => [
             {
+                id: 't1',
                 name: 'a',
                 full_challonge_url: 'a_full_challonge_url',
                 description: 'a_description',
@@ -16,6 +17,7 @@ test('listOpenTournaments', async () => {
                 progress_meter: 'a_progress_meter',
             },
             {
+                id: 't2',
                 name: 'b',
                 full_challonge_url: 'b_full_challonge_url',
                 description: 'b_description',
