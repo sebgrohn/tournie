@@ -1,4 +1,4 @@
-const handlers = require('./handlers');
+const handlers = require('./list.handlers');
 
 test('listOpenTournaments', async () => {
     const challongeService = {

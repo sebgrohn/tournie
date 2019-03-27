@@ -1,4 +1,7 @@
 
 module.exports = {
-    handlers: require('./handlers'),
+    handlers: {
+        ...require('./list.handlers'),
+        ...require('./signUp.handlers'),
+    },
 };
