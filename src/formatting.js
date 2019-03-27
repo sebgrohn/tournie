@@ -1,12 +1,6 @@
-const slackify = require('slackify-html');
 
 // TODO implement
 const formatTimestamp = isoTimestampString => isoTimestampString;
-
-const formatDescription = description =>
-    slackify(description.replace(/<\s*br\s*\/?\s*>/, '\n'));
-
-const formatTournamentType = (gameName, tournamentType) => `${formatGameName(gameName)} – ${tournamentType}`;
 
 function formatGameName(gameName) {
     switch (gameName.toLowerCase()) {
@@ -18,10 +12,6 @@ function formatGameName(gameName) {
             return gameName;
     }
 }
-
-const formatNumPlayers = (participantsCount, signupCap) => signupCap
-    ? `${participantsCount} / ${signupCap}`
-    : `${participantsCount}`;
 
 const formatUser = ({ challongeUsername, challongeEmailHash }) => `*${challongeUsername}* (${challongeEmailHash ? 'verified' : 'unverified'})`;
 
@@ -36,10 +26,7 @@ const formatParticipant = (participant, currentUserEmailHash) => participant
 
 module.exports = {
     formatTimestamp,
-    formatDescription,
-    formatTournamentType,
     formatGameName,
-    formatNumPlayers,
     formatUser,
     formatMatch,
     formatParticipant,
