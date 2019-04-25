@@ -1,3 +1,4 @@
+const userRepository = require('../users').mockRepository;
 const handlers = require('./list.handlers');
 
 test('listOpenTournaments', async () => {
@@ -31,13 +32,7 @@ test('listOpenTournaments', async () => {
             },
         ],
     };
-    const userRepository = {
-        getUser: async () => ({
-            challongeEmailHash: 3,
-            challongeUsername: 2,
-            slackUserId: 1,
-        }),
-    };
+
     const req = { sender: 'the user id' };
     const tournaments = await handlers
         .listOpenTournaments({ challongeService, userRepository })(req);
