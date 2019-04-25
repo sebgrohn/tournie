@@ -1,7 +1,8 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
-const { chain, validateUser, validateNoUser, validateCallbackValue } = require('../handlers.utils');
-const { formatUser } = require('../formatting');
+const { chain, validateCallbackValue } = require('../handlers.utils');
+const { validateUser, validateNoUser } = require('./validation');
+const { formatUser } = require('./formatting');
 
 const showCurrentUser = chain(
     validateUser,

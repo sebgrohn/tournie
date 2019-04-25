@@ -13,10 +13,7 @@ function formatGameName(gameName) {
     }
 }
 
-const formatUser = ({ challongeUsername, challongeEmailHash }) => `*${challongeUsername}* (${challongeEmailHash ? 'verified' : 'unverified'})`;
-
 module.exports = {
     formatTimestamp,
     formatGameName,
-    formatUser,
 };
