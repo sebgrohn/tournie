@@ -1,8 +1,9 @@
 const R = require('ramda');
 const SlackTemplate = require('claudia-bot-builder').slackTemplate;
 const HandlerError = require('../HandlerError');
-const { chain, concurrent, validateCallbackValue } = require('../handlers.utils');
+const { chain, concurrent } = require('../handlers.utils');
 const { validateUser } = require('../users').validation;
+const { validateCallbackValue } = require('../callback.validation');
 
 const signUpUser = chain(
     validateUser,
