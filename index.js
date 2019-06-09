@@ -8,7 +8,7 @@ const { apiKey, organization } = require('./challonge');
 const region = require('./aws-region');
 const challongeServiceFactory = R.applySpec(require('./src/challonge.service'));
 const handlersFactory = R.applySpec(require('./src/handlers'));
-const userRepositoryFactory = R.applySpec(require('./src/user.repository'));
+const userRepositoryFactory = R.applySpec(require('./src/users').repository);
 
 const api = axios.create({
     baseURL: 'https://api.challonge.com/v1/',
