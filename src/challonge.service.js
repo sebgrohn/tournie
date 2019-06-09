@@ -108,6 +108,38 @@ const addTournamentParticipant = ({ api }) => async function (tournamentId, memb
     return data.participant;
 };
 
+const reportMatchScores = ({ api }) => async function (match, scores, reportWinner = true) {
+    const { tournament_id, id, player1_id, player2_id } = match;
+
+    const numWinsP1 = R.pipe(
+        R.map(([s1, s2]) => s1 > s2 ? 1 : 0),
+        R.sum,
+    )(scores);
+    const numWinsP2 = R.pipe(
+        R.map(([s1, s2]) => s1 < s2 ? 1 : 0),
+        R.sum,
+    )(scores);
+
+    const setDifference = numWinsP1 - numWinsP2;
+
+    const { data } = await api.put(`tournaments/${tournament_id}/matches/${id}.json`, {
+        match: {
+            scores_csv: R.pipe(
+                R.map(([s1, s2]) => `${s1}-${s2}`),
+                R.join(','),
+            )(scores),
+            winner_id: reportWinner
+                ? setDifference === 0
+                    ? 'tie'
+                    : setDifference > 0
+                        ? player1_id
+                        : player2_id
+                : undefined,
+        },
+    });
+    return data.match;
+};
+
 const challongeService = {
     fetchAllTournaments,
     fetchOpenTournaments,
@@ -116,6 +148,7 @@ const challongeService = {
     fetchOpenTournamentsForMember,
     fetchOpenMatchesForMember,
     addTournamentParticipant,
+    reportMatchScores,
 };
 
 module.exports = challongeService;

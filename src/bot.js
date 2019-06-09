@@ -14,6 +14,7 @@ function botFactory(handlers) {
         logout: handlers.logOutUser, // alias for easy discovery
         signup: handlers.signUpUser,
         next: handlers.listNextMatches,
+        report: handlers.reportMatchScores,
         help: handlers.showUsage,
         usage: handlers.showUsage, // alias for easy discovery
     };
@@ -22,6 +23,7 @@ function botFactory(handlers) {
         tournament: handlers.signUpUserFromListCallback,
         login: handlers.logInUserCallback,
         signup: handlers.signUpUserCallback,
+        report: handlers.reportMatchScoresCallback,
         usage: handlers.closeUsageCallback,
     };
 
