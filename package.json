@@ -31,7 +31,7 @@
     "slackify-html": "^1.0.1"
   },
   "devDependencies": {
-    "claudia": "^5.2.0",
+    "claudia": "^5.12.0",
     "eslint": "^5.12.1",
     "eslint-plugin-jest": "^22.0.1",
     "eslint-plugin-node": "^8.0.1",
