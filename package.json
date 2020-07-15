@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/sebgrohn/tournie",
   "dependencies": {
-    "aws-sdk": "^2.373.0",
+    "aws-sdk": "^2.713.0",
     "axios": "^0.18.1",
     "claudia-bot-builder": "^4.5.0",
     "ramda": "^0.26.1",
